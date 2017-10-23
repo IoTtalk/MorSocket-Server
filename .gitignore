@@ -1,3 +1,4 @@
 .DS_Store
 MorSocketDeviceDB.json
 node_modules
+.idea
