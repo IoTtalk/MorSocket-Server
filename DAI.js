@@ -2,18 +2,19 @@
 var config = require("./Config");
 
 var dai = function (morSocket) {
-    var dan = require("./DAN").dan();
-    var macAddr = morSocket.id;
-    console.log('mac address:' + macAddr);
 
-    var pull = function (odf_name, data) {
-        console.log(odf_name + ':' + data);
-        if(odf_name.startsWith('Socket')){
-            var socketIndex = odf_name.replace('Socket','');
-            morSocket.sendOnOffCommand(socketIndex, data);
-        }
-    };
+    var dan = require("./DAN").dan();
     var register = function(){
+        var macAddr = morSocket.id;
+        console.log('mac address:' + macAddr);
+
+        var pull = function (odf_name, data) {
+            console.log(odf_name + ':' + data);
+            if(odf_name.startsWith('Socket')){
+                var socketIndex = odf_name.replace('Socket','');
+                morSocket.sendOnOffCommand(socketIndex, data);
+            }
+        };
         var odf_list = [];
         var s_list = [];
         for(var i = 0; i < morSocket.socketStateTable.length; i++){
@@ -36,7 +37,7 @@ var dai = function (morSocket) {
             'd_name' : macAddr + '.MorSocket',
             'u_name': 'yb',
             'is_sim': false,
-            'df_list': [odf_list]
+            'df_list': odf_list
 
         }, function (result) {
             console.log('register:', result);
@@ -59,11 +60,11 @@ var dai = function (morSocket) {
             // }));
 
             //deregister when app is closing
-            process.on('exit', dan.deregister);
+            //process.on('exit', dan.deregister);
             //catches ctrl+c event
-            process.on('SIGINT', dan.deregister);
+            //process.on('SIGINT', dan.deregister);
             //catches uncaught exceptions
-            process.on('uncaughtException', dan.deregister);
+            //process.on('uncaughtException', dan.deregister);
         });
     };
     return {

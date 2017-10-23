@@ -44,7 +44,7 @@ var sendOnOffCommand = function(socketIndex, state, client){
         1 represent left:00000010
     */
         pos = socketIndex % config.socketStateBits,
-        channel = 0,
+        channel = 0,				
         rw = 1,
         buffer,
         command,
@@ -97,8 +97,10 @@ var sendReadStateCommand = function(gid, client){
         client.write(buffer);
     });
 };
+
 var socketServer;
 mqttClient.on('connect',function(){
+
     /********for testing****************************************/
     var client = {};
     clientArray.push(client);

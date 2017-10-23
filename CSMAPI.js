@@ -36,8 +36,11 @@ var csmapi = (function () {
             }
         };
         var req = http.request(options, function(res) {
-            if (callback) {
+            if (res.statusCode == 200) {
                 callback(true);
+            }
+            else{
+                callback(false);
             }
         });
         req.write(data);
