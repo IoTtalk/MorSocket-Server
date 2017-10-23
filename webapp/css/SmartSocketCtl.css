@@ -1,0 +1,98 @@
+body{
+    /*background-color: #F4F8FF;*/
+}
+.ui.menu{
+    border-radius: 0px;
+}
+#spec{
+    width: 90%;
+    margin: 0 auto;
+    margin-top: 20px;
+}
+.ssSepc{
+    width:40%;
+}
+.column{
+    alignment: center;
+}
+.ui.segments{
+    width: 90%;
+    margin: 0 auto;
+    margin-top: 20px;
+}
+label{
+    font-size: 1.3em;
+}
+.ui.horizontal.segments {
+    width: 100%;
+}
+.featureSegment.ui.segment {
+    font-size: 1.5em;
+    text-align: center;
+    line-height: 90px;
+    width: 50%;
+}
+.detailSegment.ui.segment {
+    width: 50%;
+}
+.feature{
+    color: #0d71bb;
+}
+.category{
+    color: #0d71bb;
+}
+.ui.divider{
+    margin: 2px;
+}
+.alias:hover{
+    background: #f2f5ff;
+    border-radius:5px;
+    padding:2px 2px;
+    cursor: pointer;
+}
+#ssName:hover{
+    background: #f2f5ff;
+    border-radius:5px;
+    padding:1px 1px;
+    cursor: pointer;
+}
+
+::-webkit-input-placeholder {
+    text-align: center;
+}
+
+:-moz-placeholder { /* Firefox 18- */
+    text-align: center;
+}
+
+::-moz-placeholder {  /* Firefox 19+ */
+    text-align: center;
+}
+
+:-ms-input-placeholder {
+    text-align: center;
+}
+.ui.input.focus input.clickedit{
+    width: 220px;
+    padding: 5px;
+}
+
+#ssNameInput{
+    width: 170px;
+    padding: 5px;
+}
+#setupContent{
+    margin-top: 20px;
+}
+#setupPanel{
+    margin-top:30px;
+}
+#setupButton{
+    margin-top:20px;
+}
+#setupImg{
+    height: 400px;
+}
+#describeText{
+    font-size: larger;
+}

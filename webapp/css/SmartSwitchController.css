@@ -1,0 +1,38 @@
+
+#df_list_table{
+    margin-bottom: 0px;
+    width: 50%;
+}
+#df_list_save_btn{
+    width: 50%;
+}
+#category{
+    background-color: #fff8dc;
+}
+#header{
+    text-align: center;
+    width: 50%;
+}
+.df{
+    width: 30%;
+    background-color: #fff8dc;
+}
+.alias{
+    background-color: whitesmoke;
+}
+.editableBox {
+    width: 150px;
+    height: 30px;
+    margin-top: 3px;
+}
+
+.inputTextBox {
+    width: 150px;
+    margin-left: -165px;
+    height: 25px;
+    border: none;
+    margin-top: 3px;
+}
+.wrapper{
+    margin-left: 50px;
+}

@@ -1,0 +1,14 @@
+{
+  "name": "SmartSocket",
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+    "ejs": "1.x",
+    "express": "4.x",
+    "node-json-db": "^0.7.3",
+    "router": "latest",
+    "shortid": "2.x",
+    "sleep": "5.x"
+  },
+  "main": "DAI.js"
+}

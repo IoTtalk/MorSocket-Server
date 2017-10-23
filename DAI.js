@@ -1,0 +1,75 @@
+
+var config = require("./Config");
+
+var dai = function (morSocket) {
+    var dan = require("./DAN").dan();
+    var macAddr = morSocket.id;
+    console.log('mac address:' + macAddr);
+
+    var pull = function (odf_name, data) {
+        console.log(odf_name + ':' + data);
+        if(odf_name.startsWith('Socket')){
+            var socketIndex = odf_name.replace('Socket','');
+            morSocket.sendOnOffCommand(socketIndex, data);
+        }
+    };
+    var register = function(){
+        var odf_list = [];
+        var s_list = [];
+        for(var i = 0; i < morSocket.socketStateTable.length; i++){
+            var states = morSocket.socketStateTable[i].length;
+            for(var j = 0; j < states; j++){
+                if(morSocket.socketStateTable[i][j] != -1){
+                    odf_list.push('Socket' + (i*states+(j+1)));
+                    s_list.push((i*states+(j+1) >= 10) ? (i*states+(j+1)).toString() : "0" + (i*states+(j+1)).toString());
+                }
+            }
+        }
+
+        console.log(odf_list);
+        if(odf_list.length == 0) {
+            dan.deregister();
+            return;
+        }
+        dan.init(pull, config.IoTtalkIP , macAddr, {
+            'dm_name': 'MorSocket',
+            'd_name' : macAddr + '.MorSocket',
+            'u_name': 'yb',
+            'is_sim': false,
+            'df_list': [odf_list]
+
+        }, function (result) {
+            console.log('register:', result);
+
+            // var list = [];
+            // for(var i = 0; i < s_list.length; i++){
+            //     var index = parseInt(s_list[i])-1;
+            //     var gid = Math.floor(index / config.socketStateBits);
+            //     var pos = index % config.socketStateBits;
+            //     var s = {
+            //         index: parseInt(s_list[i]),
+            //         state: (morSocket.socketStateTable[gid][pos] == 1),
+            //         alias: morSocket.socketAliasTable[gid][pos]
+            //     };
+            //     list.push(s);
+            // }
+            // morSocket.mqttClient.publish('DeviceInfo', JSON.stringify({
+            //     id:morSocket.id,
+            //     sockets:list
+            // }));
+
+            //deregister when app is closing
+            process.on('exit', dan.deregister);
+            //catches ctrl+c event
+            process.on('SIGINT', dan.deregister);
+            //catches uncaught exceptions
+            process.on('uncaughtException', dan.deregister);
+        });
+    };
+    return {
+        'register': register
+    }
+
+};
+
+exports.dai = dai;

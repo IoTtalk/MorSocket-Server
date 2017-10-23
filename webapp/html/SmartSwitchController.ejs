@@ -1,0 +1,30 @@
+<html>
+    <head>
+        <title>SmartSwitchController</title>
+        <script>
+            var macAddr = "<%= macAddr %>";
+            var iottalkIP = "<%= iottalkIP %>";
+        </script>
+        <script type="application/javascript" src="../js/jquery-2.1.4.js"></script>
+        <script type="application/javascript" src="../js/SmartSwitchController.js"></script>
+        <link rel="stylesheet" type="text/css" href="../css/bulma.css">
+        <link rel="stylesheet" type="text/css" href="../css/SmartSwitchController.css">
+    </head>
+    <div id="df_list">
+        <div id="header"><b>Set device feature alias</b></div>
+        <table id="df_list_table" class="table is-bordered is-striped">
+            <thead>
+            <tr id="category">
+                <th>DeviceFeature</th>
+                <th>Alias</th>
+            </tr>
+            </thead>
+        </table>
+        <a id="df_list_save_btn" class="button is-primary">Save</a>
+    </div>
+    <!--<p>Download APP to set socket controller with SmartSocket server IP</p>-->
+    <!--<div>-->
+        <!--email:<input type="text">-->
+        <!--<button> send </button>-->
+    <!--</div>-->
+</html>
