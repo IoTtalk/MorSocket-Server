@@ -42,22 +42,22 @@ var dai = function (morSocket) {
         }, function (result) {
             console.log('register:', result);
 
-            // var list = [];
-            // for(var i = 0; i < s_list.length; i++){
-            //     var index = parseInt(s_list[i])-1;
-            //     var gid = Math.floor(index / config.socketStateBits);
-            //     var pos = index % config.socketStateBits;
-            //     var s = {
-            //         index: parseInt(s_list[i]),
-            //         state: (morSocket.socketStateTable[gid][pos] == 1),
-            //         alias: morSocket.socketAliasTable[gid][pos]
-            //     };
-            //     list.push(s);
-            // }
-            // morSocket.mqttClient.publish('DeviceInfo', JSON.stringify({
-            //     id:morSocket.id,
-            //     sockets:list
-            // }));
+            var list = [];
+            for(var i = 0; i < s_list.length; i++){
+                var index = parseInt(s_list[i])-1;
+                var gid = Math.floor(index / config.socketStateBits);
+                var pos = index % config.socketStateBits;
+                var s = {
+                    index: parseInt(s_list[i]),
+                    state: (morSocket.socketStateTable[gid][pos] == 1),
+                    alias: morSocket.socketAliasTable[gid][pos]
+                };
+                list.push(s);
+            }
+            morSocket.mqttClient.publish('DeviceInfo', JSON.stringify({
+                id:morSocket.id,
+                sockets:list
+            }));
 
             //deregister when app is closing
             //process.on('exit', dan.deregister);

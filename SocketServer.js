@@ -4,6 +4,8 @@ var os = require('os'),
     shortID = require('shortid'),
     config = require('./Config'),
     dai = require('./DAI').dai,
+    bodyParser = require('body-parser'),
+    json_body_parser = bodyParser.json(),
     express = require('express'),
     api = express(),
     sendCmdSem = require('semaphore')(1),
@@ -12,13 +14,17 @@ var os = require('os'),
     JsonDB = require('node-json-db'),
     db = new JsonDB("MorSocketDeviceDB", true, true);
 
+api.use(json_body_parser);
+
 // publish
 const deviceInfoTopic = "DeviceInfo";
 const devicesInfoTopic = "DevicesInfo";
 // subscribe
+const setupDeviceRoomTopic = "SetupDeviceRoom";
 const syncDeviceInfoTopic = "SyncDeviceInfo";
 const switchTopic = "Switch";
 const aliasTopic = "Alias";
+
 
 var clientArray = [];
 var integerToHexString = function (d) {
@@ -67,11 +73,11 @@ var sendOnOffCommand = function(socketIndex, state, client){
     cmdByteArr = hexToBytes(command);
 
     buffer = new Buffer(cmdByteArr);
-    //sendCmdSem.take(function () {
+    sendCmdSem.take(function () {
         console.log('sendOnOffCommand: ' + command);
         client.write(buffer);
-    //    sendCmdSem.leave();
-    //});
+        sendCmdSem.leave();
+    });
 
 
 };
@@ -93,8 +99,9 @@ var sendReadStateCommand = function(gid, client){
     buffer = new Buffer(cmdByteArr);
 
     sendCmdSem.take(function () {
-        //console.log('sendReadStateCommand: ' + command);
+        console.log('sendReadStateCommand: ' + command);
         client.write(buffer);
+        sendCmdSem.leave();
     });
 };
 
@@ -102,39 +109,52 @@ var socketServer;
 mqttClient.on('connect',function(){
 
     /********for testing****************************************/
-    var client = {};
-    clientArray.push(client);
-    console.log(clientArray.length);
-    client.id = "f119d466";
-    client.room = "Living room";
-    /* init socketStateTable table */
-    client.socketStateTable = new Array(config.maxSocketGroups);
-    for(var i = 0; i < config.maxSocketGroups; i++)
-        client.socketStateTable[i] = new Array(config.socketStateBits).fill(-1);
-    client.socketStateTable[0][0] = 1;
-    client.socketStateTable[0][1] = 1;
-    client.socketStateTable[1][0] = 0;
-    client.socketStateTable[1][1] = 0;
-    client.socketStateTable[2][0] = 0;
-    client.socketStateTable[2][1] = 0;
-    client.socketStateTable[3][0] = 0;
-    client.socketStateTable[3][1] = 0;
-    var socketAliasTable = null;
-    try {
-        socketAliasTable = db.getData(client.id);
-    }
-    catch (error){
-        console.log(error);
-    }
-    if(Object.keys(socketAliasTable).length != 0){
-        client.socketAliasTable = socketAliasTable;
-        console.log(socketAliasTable);
-    }
-    else{
-        client.socketAliasTable = new Array(config.maxSocketGroups);
-        for(var i = 0; i < config.maxSocketGroups; i++)
-            client.socketAliasTable[i] = new Array(config.socketStateBits).fill(null);
-    }
+    // var dan = require("./DAN").dan();
+    // setInterval(function(){
+    //     dan.init(function(){}, config.IoTtalkIP , shortID.generate(), {
+    //         'dm_name': 'MorSocket',
+    //         'd_name' : shortID.generate()+'.MorSocket',
+    //         'u_name': 'yb',
+    //         'is_sim': false,
+    //         'df_list': ['Socket1']
+    //     },function(result){
+    //         console.log('register:', result);
+    //     })
+    // },5);
+    // process.on('uncaughtException', function (err) {
+    //     console.log('Caught exception: ' + err);
+    // });
+
+    // var client = {};
+    // clientArray.push(client);
+    // console.log(clientArray.length);
+    // client.id = "f119d466";
+    // try {
+    //     client.room = db.getData("/room_" + client.id);
+    // }catch(error){
+    //     client.room = "Others";
+    // }
+    // /* init socketStateTable table */
+    // client.socketStateTable = new Array(config.maxSocketGroups);
+    // for(var i = 0; i < config.maxSocketGroups; i++)
+    //     client.socketStateTable[i] = new Array(config.socketStateBits).fill(-1);
+    // client.socketStateTable[0][0] = 1;
+    // client.socketStateTable[0][1] = 1;
+    // client.socketStateTable[1][0] = 0;
+    // client.socketStateTable[1][1] = 0;
+    // client.socketStateTable[2][0] = 0;
+    // client.socketStateTable[2][1] = 0;
+    // client.socketStateTable[3][0] = 0;
+    // client.socketStateTable[3][1] = 0;
+    // try {
+    //     client.socketAliasTable = db.getData("/"+client.id);
+    //     console.log(socketAliasTable);
+    // }
+    // catch (error){
+    //     client.socketAliasTable = new Array(config.maxSocketGroups);
+    //     for(var i = 0; i < config.maxSocketGroups; i++)
+    //         client.socketAliasTable[i] = new Array(config.socketStateBits).fill(null);
+    // }
     // mqttClient.publish(deviceInfoTopic, JSON.stringify({
     //     id:client.id,
     //     room:client.room,
@@ -172,9 +192,9 @@ mqttClient.on('connect',function(){
     //         alias:client.socketAliasTable[3][1]
     //     }]
     // }));
-    client.dai = dai(client);
-    client.dai.register();
-    return;
+    // client.dai = dai(client);
+    // client.dai.register();
+    // return;
     /********for testing************************************/
 
     mqttClient.subscribe(syncDeviceInfoTopic);
@@ -191,8 +211,8 @@ mqttClient.on('connect',function(){
             console.log(clientArray.length);
 
             /* will retrieve from client in later version */
-            client.id = shortID.generate();
-
+            // client.id = shortID.generate();
+            client.id = "f119d466";
             /* mqttPublisher will be use to publish data to MorSocket APP when register */
             client.mqttClient = mqttClient;
 
@@ -201,10 +221,21 @@ mqttClient.on('connect',function(){
             for(var i = 0; i < config.maxSocketGroups; i++)
                 client.socketStateTable[i] = new Array(config.socketStateBits).fill(-1);
             /* init socketAliasTable table */
-            client.socketAliasTable = new Array(config.maxSocketGroups);
-            for(var i = 0; i < config.maxSocketGroups; i++)
-                client.socketAliasTable[i] = new Array(config.socketStateBits).fill(null);
-
+            try {
+                client.socketAliasTable = db.getData("/"+client.id);
+            }
+            catch (error){
+                client.socketAliasTable = new Array(config.maxSocketGroups);
+                for(var i = 0; i < config.maxSocketGroups; i++)
+                    client.socketAliasTable[i] = new Array(config.socketStateBits).fill(null);
+            }
+            /* setup socket room */
+            try {
+                client.room = db.getData("/room_"+client.id);
+            }
+            catch (error){
+                client.room = "Others";
+            }
             /* construct sendOnOffCommand function for this client */
             client.sendOnOffCommand = function(socketIndex, state){
                 sendOnOffCommand(socketIndex, state, client);
@@ -226,6 +257,7 @@ mqttClient.on('connect',function(){
             client.on('data', function(cmd){
                 cmd = cmd.toString('hex').toUpperCase();
                 var op = cmd.substring(0, 2);
+                console.log(op);
                 switch(op){
 
                     case config.OPCode[1]: //B3
@@ -272,11 +304,11 @@ mqttClient.on('connect',function(){
                         //return;
                     }
                     //setTimeout(function () {
-                        sendReadStateCommand(++currentGid, client);
+                    sendReadStateCommand(++currentGid, client);
                     //},2000);
                     //console.log('client:' + client.remoteAddress + ' receive:' + cmd);
                 }
-                sendCmdSem.leave();
+                //sendCmdSem.leave();
             });
             /*client.setTimeout(10000);
              client.on('timeout', function(){
@@ -340,7 +372,7 @@ mqttClient.on('message', function (topic, message) {
         var client = findClientByID(data["id"]);
         if(client){
             console.log(data["index"]+ " " + data["state"]);
-            //client.sendOnOffCommand(data["index"], data["state"]);
+            client.sendOnOffCommand(data["index"], data["state"]);
         }
         else{
             console.log("device not exist!");
@@ -362,13 +394,27 @@ mqttClient.on('message', function (topic, message) {
                 pos = index % config.socketStateBits;
             console.log(gid + " " + pos);
             client.socketAliasTable[gid][pos] = data["alias"];
-            db.push(client.id, client.socketAliasTable, true);
+            db.push("/"+client.id, client.socketAliasTable, true);
         }
         else{
             console.log("device not exist!");
         }
     }
+
 });
+api.listen(config.webServerPort);
+api.post('/' + setupDeviceRoomTopic, function (req, res) {
+    var data = req.body;
+    /*{
+        id: string,
+        location: string
+      }
+    */
+    console.log(data);
+    db.push("/room_"+data["id"], data["location"], true);
+    res.end("ok");
+});
+
 
 
 
