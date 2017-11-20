@@ -6,6 +6,9 @@ var dai = function (morSocket) {
     var dan = require("./DAN").dan();
     var register = function(){
         var macAddr = morSocket.id;
+        var odf_list = [];
+        var s_list = [];
+
         console.log('mac address:' + macAddr);
 
         var pull = function (odf_name, data) {
@@ -14,9 +17,18 @@ var dai = function (morSocket) {
                 var socketIndex = odf_name.replace('Socket','');
                 morSocket.sendOnOffCommand(socketIndex, data);
             }
+            else if(odf_name == "Control"){
+                if(data[0] == "SET_DF_STATUS"){
+                    for(var i = 0; i < odf_list.length; i++){
+                        var index = parseInt(odf_list[i].replace("Socket", ""))-1,
+                            gid = Math.floor(index / config.socketStateBits),
+                            pos = index % config.socketStateBits;
+                        console.log(gid+" "+pos+" "+morSocket.socketAliasTable[gid][pos]);
+                        dan.set_alias(odf_list[i], morSocket.socketAliasTable[gid][pos]);
+                    }
+                }
+            }
         };
-        var odf_list = [];
-        var s_list = [];
         for(var i = 0; i < morSocket.socketStateTable.length; i++){
             var states = morSocket.socketStateTable[i].length;
             for(var j = 0; j < states; j++){
@@ -34,7 +46,7 @@ var dai = function (morSocket) {
         }
         dan.init(pull, config.IoTtalkIP , macAddr, {
             'dm_name': 'MorSocket',
-            'd_name' : macAddr + '.MorSocket',
+            'd_name' : '1.MorSocket',
             'u_name': 'yb',
             'is_sim': false,
             'df_list': odf_list
@@ -54,6 +66,7 @@ var dai = function (morSocket) {
                 };
                 list.push(s);
             }
+
             morSocket.mqttClient.publish('DeviceInfo', JSON.stringify({
                 id:morSocket.id,
                 sockets:list

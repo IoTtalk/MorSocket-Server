@@ -165,11 +165,19 @@ var dan = (function () {
         _registered = false;
         csmapi.deregister(_mac_addr, callback);
     }
+    function get_alias(df_name, callback){
+        csmapi.get_alias(_mac_addr, df_name, callback);
+    }
+    function set_alias(df_name, alias){
+        csmapi.set_alias(_mac_addr, df_name, alias);
+    }
     return {
         'init': init,
         'register': register,
         'push': push,
         'deregister': deregister,
+        'get_alias' : get_alias,
+        'set_alias' : set_alias,
     };
 });
 exports.dan = dan;

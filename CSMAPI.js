@@ -150,7 +150,7 @@ var csmapi = (function () {
                 'Content-Length': data.length
             }
         };
-        var req = http.request(options, function(res) {
+        var req = http.request(options, function() {
             if (callback) {
                 callback(true);
             }
@@ -158,7 +158,59 @@ var csmapi = (function () {
         req.write(data);
         req.end();
     }
+    function get_alias(mac_addr, df_name, callback){
+        var options = {
+            host: ENDPOINT,
+            port: 9999,
+            path:  '/get_alias/' + mac_addr + '/' + df_name,
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json; charset=utf-8',
+            }
+        };
+        var req = http.request(options, function (res) {
+            res.setEncoding('utf8');
+            var obj = '';
+            res.on('data', function (chunk) {
+                obj += chunk;
+            });
+            res.on('end', function () {
+                if (typeof obj === 'string') {
+                    obj = JSON.parse(obj);
+                }
+                if (callback) {
+                    callback(obj["alias_name"]);
+                }
+            });
+        });
+        req.end();
 
+    }
+    function set_alias(mac_addr, df_name, alias){
+        var options = {
+            host: ENDPOINT,
+            port: 9999,
+            path:  '/set_alias/' + mac_addr + '/' + df_name + '/alias?name=' + alias,
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json; charset=utf-8',
+            }
+        };
+        var req = http.request(options, function (res) {
+            res.setEncoding('utf8');
+            var obj = '';
+            res.on('data', function (chunk) {
+                obj += chunk;
+            });
+            res.on('end', function () {
+                // if (typeof obj === 'string') {
+                //     obj = JSON.parse(obj);
+                // }
+            });
+        });
+        req.end();
+
+    }
     return {
         'set_endpoint': set_endpoint,
         'get_endpoint': get_endpoint,
@@ -166,6 +218,8 @@ var csmapi = (function () {
         'deregister': deregister,
         'pull': pull,
         'push': push,
+        'get_alias': get_alias,
+        'set_alias': set_alias,
     };
 })();
 

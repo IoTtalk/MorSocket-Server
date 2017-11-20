@@ -12,7 +12,8 @@ var os = require('os'),
     mqtt = require('mqtt'),
     mqttClient = mqtt.connect('mqtt://127.0.0.1'),
     JsonDB = require('node-json-db'),
-    db = new JsonDB("MorSocketDeviceDB", true, true);
+    db = new JsonDB("MorSocketDeviceDB", true, true),
+    csmapi = require('./CSMAPI').csmapi;
 
 api.use(json_body_parser);
 
@@ -310,20 +311,6 @@ mqttClient.on('connect',function(){
                 }
                 //sendCmdSem.leave();
             });
-            /*client.setTimeout(10000);
-             client.on('timeout', function(){
-             console.log('socket timeout');
-             client.end();
-             var removeIndex = -1;
-             for(var i = 0; i < clientArray.length; i++){
-             if(this.id == clientArray[i].id){
-             removeIndex = i;
-             }
-             }
-             if(removeIndex != -1)
-             clientArray.splice(removeIndex, 1);
-             console.log('disconnected');
-             });*/
 
         });
         tcpServer.listen(config.socketServerPort, '0.0.0.0');
@@ -395,6 +382,9 @@ mqttClient.on('message', function (topic, message) {
             console.log(gid + " " + pos);
             client.socketAliasTable[gid][pos] = data["alias"];
             db.push("/"+client.id, client.socketAliasTable, true);
+            var df_name = "Socket" + (index+1);
+            console.log(df_name);
+            csmapi.set_alias(client.id, df_name, data["alias"]);
         }
         else{
             console.log("device not exist!");
