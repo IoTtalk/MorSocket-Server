@@ -27,7 +27,10 @@ var dai = function (morSocket) {
                             gid = Math.floor(index / config.socketStateBits),
                             pos = index % config.socketStateBits;
                         console.log(gid+" "+pos+" "+morSocket.socketAliasTable[gid][pos]);
-                        dan.set_alias(odf_list[i], morSocket.socketAliasTable[gid][pos]);
+                        if(morSocket.socketAliasTable[gid][pos] == null)
+                            dan.set_alias(odf_list[i], (index+1));
+                        else
+                            dan.set_alias(odf_list[i], (index+1) + ":" + morSocket.socketAliasTable[gid][pos]);
                     }
                 }
             }
