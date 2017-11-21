@@ -311,7 +311,11 @@ mqttClient.on('connect',function(){
                 }
                 //sendCmdSem.leave();
             });
-
+            client.setTimeout(3000);
+            client.on('timeout', function(){
+                clientArray.splice(findClientIndexByID(client.id), 1);
+                client.end();
+            });
         });
         tcpServer.listen(config.socketServerPort, '0.0.0.0');
     })();
@@ -321,9 +325,20 @@ var findClientByID = function(clientID){
     for(var i = 0; i < clientArray.length; i++){
         if(clientArray[i].id == clientID){
             client = clientArray[i];
+            break;
         }
     }
     return client;
+};
+var findClientIndexByID = function(clientID){
+    var index = -1;
+    for(var i = 0; i < clientArray.length; i++){
+        if(clientArray[i].id == clientID){
+            index = i;
+            break;
+        }
+    }
+    return index;
 };
 mqttClient.on('message', function (topic, message) {
     if(topic == syncDeviceInfoTopic){

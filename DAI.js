@@ -46,7 +46,7 @@ var dai = function (morSocket) {
         }
         dan.init(pull, config.IoTtalkIP , macAddr, {
             'dm_name': 'MorSocket',
-            'd_name' : '1.MorSocket',
+            'd_name' : macAddr,
             'u_name': 'yb',
             'is_sim': false,
             'df_list': odf_list
