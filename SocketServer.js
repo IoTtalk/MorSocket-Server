@@ -404,7 +404,7 @@ mqttClient.on('message', function (topic, message) {
             db.push("/"+client.id, client.socketAliasTable, true);
             var df_name = "Socket" + (index+1);
             console.log(df_name);
-            csmapi.set_alias(client.id, df_name, data["alias"]);
+            csmapi.set_alias(client.id, df_name, (index+1) + ":" + data["alias"]);
         }
         else{
             console.log("device not exist!");
