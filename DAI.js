@@ -1,6 +1,6 @@
 
-var config = require("./Config");
-
+var config = require("./Config"),
+    mqttTopic = require('./MqttTopic');
 var dai = function (morSocket) {
 
     var dan = require("./DAN").dan();
@@ -67,7 +67,7 @@ var dai = function (morSocket) {
                 list.push(s);
             }
 
-            morSocket.mqttClient.publish('DeviceInfo', JSON.stringify({
+            morSocket.mqttClient.publish(mqttTopic.deviceInfoTopic, JSON.stringify({
                 id:morSocket.id,
                 sockets:list
             }));

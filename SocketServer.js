@@ -1,8 +1,8 @@
 'use strict';
-var os = require('os'),
-    net = require('net'),
+var net = require('net'),
     shortID = require('shortid'),
     config = require('./Config'),
+    mqttTopic = require('./MqttTopic'),
     dai = require('./DAI').dai,
     bodyParser = require('body-parser'),
     json_body_parser = bodyParser.json(),
@@ -16,15 +16,6 @@ var os = require('os'),
     csmapi = require('./CSMAPI').csmapi;
 
 api.use(json_body_parser);
-
-// publish
-const deviceInfoTopic = "DeviceInfo";
-const devicesInfoTopic = "DevicesInfo";
-// subscribe
-const setupDeviceRoomTopic = "SetupDeviceRoom";
-const syncDeviceInfoTopic = "SyncDeviceInfo";
-const switchTopic = "Switch";
-const aliasTopic = "Alias";
 
 
 var clientArray = [];
@@ -198,9 +189,9 @@ mqttClient.on('connect',function(){
     // return;
     /********for testing************************************/
 
-    mqttClient.subscribe(syncDeviceInfoTopic);
-    mqttClient.subscribe(switchTopic);
-    mqttClient.subscribe(aliasTopic);
+    mqttClient.subscribe(mqttTopic.syncDeviceInfoTopic);
+    mqttClient.subscribe(mqttTopic.switchTopic);
+    mqttClient.subscribe(mqttTopic.aliasTopic);
 
     socketServer = (function () {
 
@@ -311,10 +302,16 @@ mqttClient.on('connect',function(){
                 }
                 //sendCmdSem.leave();
             });
-            client.setTimeout(3000);
+            // timeout event for detect MorSocket power off
+            client.setTimeout(5000);
             client.on('timeout', function(){
+                console.log('timeout');
                 clientArray.splice(findClientIndexByID(client.id), 1);
                 client.end();
+                // publish devicesInfoTopic
+                mqttClient.publish(mqttTopic.devicesInfoTopic, JSON.stringify({
+                    devices: makeDevicesArray()
+                }));
             });
         });
         tcpServer.listen(config.socketServerPort, '0.0.0.0');
@@ -340,35 +337,38 @@ var findClientIndexByID = function(clientID){
     }
     return index;
 };
-mqttClient.on('message', function (topic, message) {
-    if(topic == syncDeviceInfoTopic){
-        var devices = [];
-        for(var i = 0; i < clientArray.length; i++){
-            var sockets = [];
-            for(var j = 0; j < config.maxSocketGroups; j++){
-                for(var k = 0; k < config.socketStateBits; k++){
-                    if(clientArray[i].socketStateTable[j][k] != -1){
-                        var socket = {};
-                        socket["index"] = (j*config.socketStateBits+k+1);
-                        socket["state"] = (clientArray[i].socketStateTable[j][k] == 1) ? true : false;
-                        socket["alias"] = clientArray[i].socketAliasTable[j][k];
-                        sockets.push(socket);
-                    }
+var makeDevicesArray = function(){
+    var devices = [];
+    for(var i = 0; i < clientArray.length; i++){
+        var sockets = [];
+        for(var j = 0; j < config.maxSocketGroups; j++){
+            for(var k = 0; k < config.socketStateBits; k++){
+                if(clientArray[i].socketStateTable[j][k] != -1){
+                    var socket = {};
+                    socket["index"] = (j*config.socketStateBits+k+1);
+                    socket["state"] = (clientArray[i].socketStateTable[j][k] == 1) ? true : false;
+                    socket["alias"] = clientArray[i].socketAliasTable[j][k];
+                    sockets.push(socket);
                 }
             }
-            var device = {
-                id: clientArray[i].id,
-                room: clientArray[i].room,
-                sockets:sockets
-            };
-            devices.push(device);
         }
-        mqttClient.publish(devicesInfoTopic, JSON.stringify({
-            devices: devices
-        }));
-        console.log(JSON.stringify(devices));
+        var device = {
+            id: clientArray[i].id,
+            room: clientArray[i].room,
+            sockets:sockets
+        };
+        devices.push(device);
     }
-    else if(topic == switchTopic){
+    console.log(JSON.stringify(devices));
+    return devices;
+};
+mqttClient.on('message', function (topic, message) {
+    if(topic == mqttTopic.syncDeviceInfoTopic){
+        mqttClient.publish(mqttTopic.devicesInfoTopic, JSON.stringify({
+            devices: makeDevicesArray()
+        }));
+    }
+    else if(topic == mqttTopic.switchTopic){
         var data = JSON.parse(message);
         console.log(data);
         var client = findClientByID(data["id"]);
@@ -380,7 +380,7 @@ mqttClient.on('message', function (topic, message) {
             console.log("device not exist!");
         }
     }
-    else if(topic == aliasTopic){
+    else if(topic == mqttTopic.aliasTopic){
         var data = JSON.parse(message);
         /*{
             id: string,
@@ -408,7 +408,7 @@ mqttClient.on('message', function (topic, message) {
 
 });
 api.listen(config.webServerPort);
-api.post('/' + setupDeviceRoomTopic, function (req, res) {
+api.post('/' + mqttTopic.setupDeviceRoomTopic, function (req, res) {
     var data = req.body;
     /*{
         id: string,
