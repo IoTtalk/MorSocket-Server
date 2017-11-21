@@ -307,11 +307,16 @@ mqttClient.on('connect',function(){
             client.on('timeout', function(){
                 console.log('timeout');
                 clientArray.splice(findClientIndexByID(client.id), 1);
-                client.end();
+                client.dai.deregister();
+                client.disconnect();
                 // publish devicesInfoTopic
                 mqttClient.publish(mqttTopic.devicesInfoTopic, JSON.stringify({
                     devices: makeDevicesArray()
                 }));
+            });
+            client.on("error", function(err){
+                console.log("Caught socket error: ")
+                console.log(err.stack)
             });
         });
         tcpServer.listen(config.socketServerPort, '0.0.0.0');

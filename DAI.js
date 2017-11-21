@@ -4,6 +4,9 @@ var config = require("./Config"),
 var dai = function (morSocket) {
 
     var dan = require("./DAN").dan();
+    var deregister = function(){
+        dan.deregister();
+    };
     var register = function(){
         var macAddr = morSocket.id;
         var odf_list = [];
@@ -81,7 +84,8 @@ var dai = function (morSocket) {
         });
     };
     return {
-        'register': register
+        'register': register,
+        'deregister': deregister
     }
 
 };
