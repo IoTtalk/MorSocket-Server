@@ -8,9 +8,9 @@
     "router": "latest",
     "shortid": "2.x",
     "sleep": "5.x",
-	"body-parser": "",
-	"mqtt": "",
-	"semaphore": ""
+    "body-parser": "",
+    "mqtt": "",
+    "semaphore": ""
   },
   "main": "MorSocketServer.js"
 }
