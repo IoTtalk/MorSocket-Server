@@ -241,7 +241,7 @@ mqttClient.on('connect',function(){
                             var cmdGid = parseInt(cmd.substring(2, 4), 16), // should be equal to currentGid
                                 cmdState = parseInt(cmd.substring(4, 6), 16).toString(2).split('').reverse();
                             for (var i = 0; i < config.socketStateBits; i++)
-                                client.socketStateTable[cmdGid][i] = (cmdState.length > i) ?
+                                client.socketStateTable[currentGid][i] = (cmdState.length > i) ?
                                     cmdState[i] : 0;
                             console.log(currentGid);
                             break;
@@ -271,6 +271,7 @@ mqttClient.on('connect',function(){
                             triggerRegister = false;
                             console.log(client.socketStateTable);
                         }
+                        //setTimeout(function(){cmdHandler.sendReadStateCommand(++currentGid, client);}, 2000);
                         cmdHandler.sendReadStateCommand(++currentGid, client);
                     }
                 });
