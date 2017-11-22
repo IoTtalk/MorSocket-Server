@@ -1,6 +1,5 @@
 {
-  "name": "SmartSocket",
-  "version": "0.0.1",
+  "name": "MorSocket-Server",
   "private": true,
   "dependencies": {
     "ejs": "1.x",
@@ -8,7 +7,10 @@
     "node-json-db": "^0.7.3",
     "router": "latest",
     "shortid": "2.x",
-    "sleep": "5.x"
+    "sleep": "5.x",
+	"body-parser": "",
+	"mqtt": "",
+	"semaphore": ""
   },
-  "main": "DAI.js"
+  "main": "MorSocketServer.js"
 }
