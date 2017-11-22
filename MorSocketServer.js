@@ -168,131 +168,136 @@ mqttClient.on('connect',function(){
     mqttClient.subscribe(mqttTopic.aliasTopic);
 
     /* socket server start */
-    (function () {
+    try {
+        (function () {
 
-        var tcpServer = net.createServer(function (client) {
+            var tcpServer = net.createServer(function (client) {
 
-            var sendCmdSem = semaphore(1),
-                cmdHandler = new commandHandler(sendCmdSem);
+                var sendCmdSem = semaphore(1),
+                    cmdHandler = new commandHandler(sendCmdSem);
 
-            /* Debug message */
-            console.log('connected: ' + client.remoteAddress + ':' + client.remotePort);
-            clientArray.push(client);
-            console.log(clientArray.length);
+                /* Debug message */
+                console.log('connected: ' + client.remoteAddress + ':' + client.remotePort);
+                clientArray.push(client);
+                console.log(clientArray.length);
 
-            /* Will retrieve from client in later version */
-            // client.id = shortID.generate();
-            client.id = "f119d466";
-            /* MqttPublisher will be use to publish data to MorSocket APP when register */
-            client.mqttClient = mqttClient;
+                /* Will retrieve from client in later version */
+                // client.id = shortID.generate();
+                client.id = "f119d466";
+                /* MqttPublisher will be use to publish data to MorSocket APP when register */
+                client.mqttClient = mqttClient;
 
-            /* Init socketStateTable table */
-            client.socketStateTable = new Array(config.maxSocketGroups);
-            for(var i = 0; i < config.maxSocketGroups; i++)
-                client.socketStateTable[i] = new Array(config.socketStateBits).fill(-1);
-            /* Init socketAliasTable table */
-            try {
-                client.socketAliasTable = db.getData("/"+client.id);
-            }
-            catch (error){
-                client.socketAliasTable = new Array(config.maxSocketGroups);
-                for(var i = 0; i < config.maxSocketGroups; i++)
-                    client.socketAliasTable[i] = new Array(config.socketStateBits).fill(null);
-            }
-            /* Setup socket room */
-            try {
-                client.room = db.getData("/room_"+client.id);
-            }
-            catch (error){
-                client.room = "Others";
-            }
-            /* Construct sendOnOffCommand function for this client */
-            client.sendOnOffCommand = function(socketIndex, state){
-                cmdHandler.sendOnOffCommand(socketIndex, state, client);
-            };
-
-            /* Init DAI of the client */
-            client.dai = dai(client);
-
-            /* Current polling gid */
-            var currentGid = 0;
-
-            /* Use to indicate whether socketStateTable has been changed */
-            var triggerRegister = false;
-
-            /* Start polling socket state */
-            cmdHandler.sendReadStateCommand(currentGid, client);
-
-            /* Command received */
-            client.on('data', function(cmd){
-                cmd = cmd.toString('hex').toUpperCase();
-                var op = cmd.substring(0, 2);
-                console.log(op);
-                switch(op){
-
-                    case config.OPCode[1]: //B3
-
-                        /* Client state has changed, trigger register */
-                        if(client.socketStateTable[currentGid][0] == -1)
-                            triggerRegister = true;
-
-                        /* Update socketStateTable of client */
-                        var cmdGid = parseInt(cmd.substring(2, 4), 16), // should be equal to currentGid
-                            cmdState = parseInt(cmd.substring(4, 6), 16).toString(2).split('').reverse();
-                        for(var i = 0; i < config.socketStateBits; i++)
-                            client.socketStateTable[cmdGid][i] = (cmdState.length > i) ?
-                                cmdState[i] : 0;
-                        console.log(currentGid);
-                        break;
-
-                    case config.OPCode[2]: //E1
-                        /* Client state has changed, trigger register */
-                        if(client.socketStateTable[currentGid][0] != -1)
-                            triggerRegister = true;
-
-                        /* Update socketStateTable of client */
-                        for(var i = 0; i < config.socketStateBits; i++)
-                            client.socketStateTable[currentGid][i] = -1;
-                        break;
-
-                    default:
-                        console.log('from client: ' + client.remoteAddress + 'gid: ' +
-                            currentGid + ' reply unknow cmd: ' + cmd);
-                        break;
-
+                /* Init socketStateTable table */
+                client.socketStateTable = new Array(config.maxSocketGroups);
+                for (var i = 0; i < config.maxSocketGroups; i++)
+                    client.socketStateTable[i] = new Array(config.socketStateBits).fill(-1);
+                /* Init socketAliasTable table */
+                try {
+                    client.socketAliasTable = db.getData("/" + client.id);
                 }
-                if(currentGid == cmdGid || cmdGid == undefined) {
-                    if (currentGid == config.maxSocketGroups - 1) {
-                        if (triggerRegister)
-                            client.dai.register();
-                        /* Start over again */
-                        currentGid = -1;
-                        triggerRegister = false;
-                        console.log(client.socketStateTable);
+                catch (error) {
+                    client.socketAliasTable = new Array(config.maxSocketGroups);
+                    for (var i = 0; i < config.maxSocketGroups; i++)
+                        client.socketAliasTable[i] = new Array(config.socketStateBits).fill(null);
+                }
+                /* Setup socket room */
+                try {
+                    client.room = db.getData("/room_" + client.id);
+                }
+                catch (error) {
+                    client.room = "Others";
+                }
+                /* Construct sendOnOffCommand function for this client */
+                client.sendOnOffCommand = function (socketIndex, state) {
+                    cmdHandler.sendOnOffCommand(socketIndex, state, client);
+                };
+
+                /* Init DAI of the client */
+                client.dai = dai(client);
+
+                /* Current polling gid */
+                var currentGid = 0;
+
+                /* Use to indicate whether socketStateTable has been changed */
+                var triggerRegister = false;
+
+                /* Start polling socket state */
+                cmdHandler.sendReadStateCommand(currentGid, client);
+
+                /* Command received */
+                client.on('data', function (cmd) {
+                    cmd = cmd.toString('hex').toUpperCase();
+                    var op = cmd.substring(0, 2);
+                    console.log(op);
+                    switch (op) {
+
+                        case config.OPCode[1]: //B3
+
+                            /* Client state has changed, trigger register */
+                            if (client.socketStateTable[currentGid][0] == -1)
+                                triggerRegister = true;
+
+                            /* Update socketStateTable of client */
+                            var cmdGid = parseInt(cmd.substring(2, 4), 16), // should be equal to currentGid
+                                cmdState = parseInt(cmd.substring(4, 6), 16).toString(2).split('').reverse();
+                            for (var i = 0; i < config.socketStateBits; i++)
+                                client.socketStateTable[cmdGid][i] = (cmdState.length > i) ?
+                                    cmdState[i] : 0;
+                            console.log(currentGid);
+                            break;
+
+                        case config.OPCode[2]: //E1
+                            /* Client state has changed, trigger register */
+                            if (client.socketStateTable[currentGid][0] != -1)
+                                triggerRegister = true;
+
+                            /* Update socketStateTable of client */
+                            for (var i = 0; i < config.socketStateBits; i++)
+                                client.socketStateTable[currentGid][i] = -1;
+                            break;
+
+                        default:
+                            console.log('from client: ' + client.remoteAddress + 'gid: ' +
+                                currentGid + ' reply unknow cmd: ' + cmd);
+                            break;
+
                     }
-                    cmdHandler.sendReadStateCommand(++currentGid, client);
-                }
+                    if (currentGid == cmdGid || cmdGid == undefined) {
+                        if (currentGid == config.maxSocketGroups - 1) {
+                            if (triggerRegister)
+                                client.dai.register();
+                            /* Start over again */
+                            currentGid = -1;
+                            triggerRegister = false;
+                            console.log(client.socketStateTable);
+                        }
+                        cmdHandler.sendReadStateCommand(++currentGid, client);
+                    }
+                });
+                /* Timeout event for detect MorSocket power off */
+                client.setTimeout(5000);
+                client.on('timeout', function () {
+                    console.log('timeout');
+                    clientArray.splice(findClientIndexByID(client.id), 1);
+                    client.dai.deregister();
+                    client.end();
+                    /* publish devicesInfoTopic */
+                    mqttClient.publish(mqttTopic.devicesInfoTopic, JSON.stringify({
+                        devices: makeDevicesArray()
+                    }));
+                });
+                /* Catch socket error */
+                client.on("error", function (err) {
+                    console.log("Caught socket error: ")
+                    console.log(err.stack)
+                });
             });
-            /* Timeout event for detect MorSocket power off */
-            client.setTimeout(5000);
-            client.on('timeout', function(){
-                console.log('timeout');
-                clientArray.splice(findClientIndexByID(client.id), 1);
-                client.dai.deregister();
-                client.end();
-                /* publish devicesInfoTopic */
-                mqttClient.publish(mqttTopic.devicesInfoTopic, JSON.stringify({
-                    devices: makeDevicesArray()
-                }));
-            });
-            /* Catch socket error */
-            client.on("error", function(err){
-                console.log("Caught socket error: ")
-                console.log(err.stack)
-            });
-        });
-        tcpServer.listen(config.socketServerPort, '0.0.0.0');
-    })();
+            tcpServer.listen(config.socketServerPort, '0.0.0.0');
+        })();
+    }catch (error){
+        console.log(error);
+    }
+
 });
 
 
@@ -340,6 +345,7 @@ mqttClient.on('message', function (topic, message) {
             console.log("device not exist!");
         }
     }
+
 
 });
 
