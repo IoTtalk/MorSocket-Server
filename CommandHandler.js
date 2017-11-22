@@ -35,7 +35,8 @@ CommandHandler.prototype.sendOnOffCommand = function(socketIndex, state, client)
         rw = 1,
         buffer,
         command,
-        cmdByteArr;
+        cmdByteArr,
+        sendCmdSem = this.sendCmdSem;
 
     /* offline, command not send*/
     if(client.socketStateTable[gid][pos] == -1){
@@ -54,7 +55,6 @@ CommandHandler.prototype.sendOnOffCommand = function(socketIndex, state, client)
     cmdByteArr = this.hexToBytes(command);
 
     buffer = new Buffer(cmdByteArr);
-    var sendCmdSem = this.sendCmdSem;
     sendCmdSem.take(function () {
         console.log('sendOnOffCommand: ' + command);
         client.write(buffer);
@@ -71,7 +71,8 @@ CommandHandler.prototype.sendReadStateCommand = function(gid, client){
         rw = 0,
         buffer,
         command,
-        cmdByteArr;
+        cmdByteArr,
+        sendCmdSem = this.sendCmdSem;
 
     command = op + this.integerToHexString(gid) + this.integerToHexString(rw)
         + this.integerToHexString(state) + this.integerToHexString(channel);
@@ -79,7 +80,6 @@ CommandHandler.prototype.sendReadStateCommand = function(gid, client){
     cmdByteArr = this.hexToBytes(command);
 
     buffer = new Buffer(cmdByteArr);
-    var sendCmdSem = this.sendCmdSem;
     sendCmdSem.take(function () {
         console.log('sendReadStateCommand: ' + command);
         client.write(buffer);
