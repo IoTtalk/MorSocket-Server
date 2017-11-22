@@ -1,106 +1,80 @@
 'use strict';
-var net = require('net'),
+var /* For create tcp server */
+    net = require('net'),
+    /* For generate MorSocket ID */
     shortID = require('shortid'),
+    /* Load configure constant */
     config = require('./Config'),
-    mqttTopic = require('./MqttTopic'),
+    /* Load IoTtalk  module */
     dai = require('./DAI').dai,
+    csmapi = require('./CSMAPI').csmapi,
+    /* For HTTP RESTful API*/
     bodyParser = require('body-parser'),
     json_body_parser = bodyParser.json(),
     express = require('express'),
     api = express(),
-    sendCmdSem = require('semaphore')(1),
+    /* For MQTT API */
+    mqttTopic = require('./MqttTopic'),
     mqtt = require('mqtt'),
-    mqttClient = mqtt.connect('mqtt://127.0.0.1'),
+    mqttClient = mqtt.connect(config.MQTTIP),
+    /* For socket server local database */
     JsonDB = require('node-json-db'),
     db = new JsonDB("MorSocketDeviceDB", true, true),
-    csmapi = require('./CSMAPI').csmapi;
+    /* For send commands and make commands mutual exclusive */
+    semaphore = require('semaphore'),
+    commandHandler = require('./CommandHandler').CommandHandler,
+    /* Record all connected MorSocket clients */
+    clientArray = [];
 
-api.use(json_body_parser);
-
-
-var clientArray = [];
-var integerToHexString = function (d) {
-    return ((d < 16) ? ('0') : '') + (d.toString(16)).slice(-2).toUpperCase();
-};
-
-var hexToBytes = function(hex) {
-    for (var bytes = [], c = 0; c < hex.length; c += 2)
-        bytes.push(parseInt(hex.substr(c, 2), 16));
-    return bytes;
-
-};
-
-var sendOnOffCommand = function(socketIndex, state, client){
-    socketIndex = parseInt(socketIndex);
-    socketIndex--;
-
-    var op = config.OPCode[0],
-        gid = Math.floor(socketIndex / config.socketStateBits),
-
-    /*  socket position
-        0 represent right: 00000001
-        1 represent left:00000010
-    */
-        pos = socketIndex % config.socketStateBits,
-        channel = 0,				
-        rw = 1,
-        buffer,
-        command,
-        cmdByteArr;
-
-    /* offline, command not send*/
-    if(client.socketStateTable[gid][pos] == -1){
-        console.log('offline command not send!');
-        return;
+var findClientByID = function(clientID){
+    var client = null;
+    for(var i = 0; i < clientArray.length; i++){
+        if(clientArray[i].id == clientID){
+            client = clientArray[i];
+            break;
+        }
     }
-
-    var posArr = client.socketStateTable[gid].slice();
-    posArr[pos] = Number(state);
-    //client.socketStateTable[gid][pos] = Number(state);
-    state = parseInt(posArr.reverse().join(''), 2);
-
-    command = op + integerToHexString(gid) + integerToHexString(rw)
-        + integerToHexString(state) + integerToHexString(channel);
-
-    cmdByteArr = hexToBytes(command);
-
-    buffer = new Buffer(cmdByteArr);
-    sendCmdSem.take(function () {
-        console.log('sendOnOffCommand: ' + command);
-        client.write(buffer);
-        sendCmdSem.leave();
-    });
-
-
+    return client;
 };
-var sendReadStateCommand = function(gid, client){
-
-    var op = config.OPCode[0],
-        state = 0,
-        channel = 0,
-        rw = 0,
-        buffer,
-        command,
-        cmdByteArr;
-
-    command = op + integerToHexString(gid) + integerToHexString(rw)
-        + integerToHexString(state) + integerToHexString(channel);
-
-    cmdByteArr = hexToBytes(command);
-
-    buffer = new Buffer(cmdByteArr);
-
-    sendCmdSem.take(function () {
-        console.log('sendReadStateCommand: ' + command);
-        client.write(buffer);
-        sendCmdSem.leave();
-    });
+var findClientIndexByID = function(clientID){
+    var index = -1;
+    for(var i = 0; i < clientArray.length; i++){
+        if(clientArray[i].id == clientID){
+            index = i;
+            break;
+        }
+    }
+    return index;
+};
+var makeDevicesArray = function(){
+    var devices = [];
+    for(var i = 0; i < clientArray.length; i++){
+        var sockets = [];
+        for(var j = 0; j < config.maxSocketGroups; j++){
+            for(var k = 0; k < config.socketStateBits; k++){
+                if(clientArray[i].socketStateTable[j][k] != -1){
+                    var socket = {};
+                    socket["index"] = (j*config.socketStateBits+k+1);
+                    socket["state"] = (clientArray[i].socketStateTable[j][k] == 1) ? true : false;
+                    socket["alias"] = clientArray[i].socketAliasTable[j][k];
+                    sockets.push(socket);
+                }
+            }
+        }
+        var device = {
+            id: clientArray[i].id,
+            room: clientArray[i].room,
+            sockets:sockets
+        };
+        devices.push(device);
+    }
+    console.log(JSON.stringify(devices));
+    return devices;
 };
 
-var socketServer;
 mqttClient.on('connect',function(){
 
-    /********for testing****************************************/
+    /********For testing****************************************/
     // var dan = require("./DAN").dan();
     // setInterval(function(){
     //     dan.init(function(){}, config.IoTtalkIP , shortID.generate(), {
@@ -187,32 +161,36 @@ mqttClient.on('connect',function(){
     // client.dai = dai(client);
     // client.dai.register();
     // return;
-    /********for testing************************************/
+    /********For testing************************************/
 
     mqttClient.subscribe(mqttTopic.syncDeviceInfoTopic);
     mqttClient.subscribe(mqttTopic.switchTopic);
     mqttClient.subscribe(mqttTopic.aliasTopic);
 
-    socketServer = (function () {
+    /* socket server start */
+    (function () {
 
         var tcpServer = net.createServer(function (client) {
 
-            /* debug message */
+            var sendCmdSem = semaphore(1),
+                cmdHandler = new commandHandler(sendCmdSem);
+
+            /* Debug message */
             console.log('connected: ' + client.remoteAddress + ':' + client.remotePort);
             clientArray.push(client);
             console.log(clientArray.length);
 
-            /* will retrieve from client in later version */
+            /* Will retrieve from client in later version */
             // client.id = shortID.generate();
             client.id = "f119d466";
-            /* mqttPublisher will be use to publish data to MorSocket APP when register */
+            /* MqttPublisher will be use to publish data to MorSocket APP when register */
             client.mqttClient = mqttClient;
 
-            /* init socketStateTable table */
+            /* Init socketStateTable table */
             client.socketStateTable = new Array(config.maxSocketGroups);
             for(var i = 0; i < config.maxSocketGroups; i++)
                 client.socketStateTable[i] = new Array(config.socketStateBits).fill(-1);
-            /* init socketAliasTable table */
+            /* Init socketAliasTable table */
             try {
                 client.socketAliasTable = db.getData("/"+client.id);
             }
@@ -221,31 +199,31 @@ mqttClient.on('connect',function(){
                 for(var i = 0; i < config.maxSocketGroups; i++)
                     client.socketAliasTable[i] = new Array(config.socketStateBits).fill(null);
             }
-            /* setup socket room */
+            /* Setup socket room */
             try {
                 client.room = db.getData("/room_"+client.id);
             }
             catch (error){
                 client.room = "Others";
             }
-            /* construct sendOnOffCommand function for this client */
+            /* Construct sendOnOffCommand function for this client */
             client.sendOnOffCommand = function(socketIndex, state){
-                sendOnOffCommand(socketIndex, state, client);
+                cmdHandler.sendOnOffCommand(socketIndex, state, client);
             };
 
-            /* init DAI of the client */
+            /* Init DAI of the client */
             client.dai = dai(client);
 
-            /* current polling gid */
+            /* Current polling gid */
             var currentGid = 0;
 
-            /* use to indicate whether socketStateTable has been changed */
+            /* Use to indicate whether socketStateTable has been changed */
             var triggerRegister = false;
 
-            /* start polling socket state */
-            sendReadStateCommand(currentGid, client);
+            /* Start polling socket state */
+            cmdHandler.sendReadStateCommand(currentGid, client);
 
-            /* command received */
+            /* Command received */
             client.on('data', function(cmd){
                 cmd = cmd.toString('hex').toUpperCase();
                 var op = cmd.substring(0, 2);
@@ -254,11 +232,11 @@ mqttClient.on('connect',function(){
 
                     case config.OPCode[1]: //B3
 
-                        /* client state has changed, trigger register */
+                        /* Client state has changed, trigger register */
                         if(client.socketStateTable[currentGid][0] == -1)
                             triggerRegister = true;
 
-                        /* update socketStateTable of client */
+                        /* Update socketStateTable of client */
                         var cmdGid = parseInt(cmd.substring(2, 4), 16), // should be equal to currentGid
                             cmdState = parseInt(cmd.substring(4, 6), 16).toString(2).split('').reverse();
                         for(var i = 0; i < config.socketStateBits; i++)
@@ -268,12 +246,11 @@ mqttClient.on('connect',function(){
                         break;
 
                     case config.OPCode[2]: //E1
-                        ///console.log(currentGid);
-                        /* client state has changed, trigger register */
+                        /* Client state has changed, trigger register */
                         if(client.socketStateTable[currentGid][0] != -1)
                             triggerRegister = true;
 
-                        /* update socketStateTable of client */
+                        /* Update socketStateTable of client */
                         for(var i = 0; i < config.socketStateBits; i++)
                             client.socketStateTable[currentGid][i] = -1;
                         break;
@@ -288,32 +265,27 @@ mqttClient.on('connect',function(){
                     if (currentGid == config.maxSocketGroups - 1) {
                         if (triggerRegister)
                             client.dai.register();
-                        /* start over again */
+                        /* Start over again */
                         currentGid = -1;
                         triggerRegister = false;
                         console.log(client.socketStateTable);
-                        //sendCmdSem.leave();
-                        //return;
                     }
-                    //setTimeout(function () {
-                    sendReadStateCommand(++currentGid, client);
-                    //},2000);
-                    //console.log('client:' + client.remoteAddress + ' receive:' + cmd);
+                    cmdHandler.sendReadStateCommand(++currentGid, client);
                 }
-                //sendCmdSem.leave();
             });
-            // timeout event for detect MorSocket power off
+            /* Timeout event for detect MorSocket power off */
             client.setTimeout(5000);
             client.on('timeout', function(){
                 console.log('timeout');
                 clientArray.splice(findClientIndexByID(client.id), 1);
                 client.dai.deregister();
                 client.disconnect();
-                // publish devicesInfoTopic
+                /* publish devicesInfoTopic */
                 mqttClient.publish(mqttTopic.devicesInfoTopic, JSON.stringify({
                     devices: makeDevicesArray()
                 }));
             });
+            /* Catch socket error */
             client.on("error", function(err){
                 console.log("Caught socket error: ")
                 console.log(err.stack)
@@ -322,51 +294,9 @@ mqttClient.on('connect',function(){
         tcpServer.listen(config.socketServerPort, '0.0.0.0');
     })();
 });
-var findClientByID = function(clientID){
-    var client = null;
-    for(var i = 0; i < clientArray.length; i++){
-        if(clientArray[i].id == clientID){
-            client = clientArray[i];
-            break;
-        }
-    }
-    return client;
-};
-var findClientIndexByID = function(clientID){
-    var index = -1;
-    for(var i = 0; i < clientArray.length; i++){
-        if(clientArray[i].id == clientID){
-            index = i;
-            break;
-        }
-    }
-    return index;
-};
-var makeDevicesArray = function(){
-    var devices = [];
-    for(var i = 0; i < clientArray.length; i++){
-        var sockets = [];
-        for(var j = 0; j < config.maxSocketGroups; j++){
-            for(var k = 0; k < config.socketStateBits; k++){
-                if(clientArray[i].socketStateTable[j][k] != -1){
-                    var socket = {};
-                    socket["index"] = (j*config.socketStateBits+k+1);
-                    socket["state"] = (clientArray[i].socketStateTable[j][k] == 1) ? true : false;
-                    socket["alias"] = clientArray[i].socketAliasTable[j][k];
-                    sockets.push(socket);
-                }
-            }
-        }
-        var device = {
-            id: clientArray[i].id,
-            room: clientArray[i].room,
-            sockets:sockets
-        };
-        devices.push(device);
-    }
-    console.log(JSON.stringify(devices));
-    return devices;
-};
+
+
+/* MorSocket Server MQTT API */
 mqttClient.on('message', function (topic, message) {
     if(topic == mqttTopic.syncDeviceInfoTopic){
         mqttClient.publish(mqttTopic.devicesInfoTopic, JSON.stringify({
@@ -412,6 +342,9 @@ mqttClient.on('message', function (topic, message) {
     }
 
 });
+
+/* MorSocket Server RESTful API */
+api.use(json_body_parser);
 api.listen(config.webServerPort);
 api.post('/' + mqttTopic.setupDeviceRoomTopic, function (req, res) {
     var data = req.body;
@@ -424,8 +357,3 @@ api.post('/' + mqttTopic.setupDeviceRoomTopic, function (req, res) {
     db.push("/room_"+data["id"], data["location"], true);
     res.end("ok");
 });
-
-
-
-
-exports.socketServer = socketServer;
