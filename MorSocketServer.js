@@ -279,7 +279,7 @@ mqttClient.on('connect',function(){
                 console.log('timeout');
                 clientArray.splice(findClientIndexByID(client.id), 1);
                 client.dai.deregister();
-                client.disconnect();
+                client.end();
                 /* publish devicesInfoTopic */
                 mqttClient.publish(mqttTopic.devicesInfoTopic, JSON.stringify({
                     devices: makeDevicesArray()
