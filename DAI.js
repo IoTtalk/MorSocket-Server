@@ -13,7 +13,18 @@ var dai = function (morSocket) {
         var s_list = [];
 
         console.log('mac address:' + macAddr);
-
+        var setAliases = function(){
+            for(var i = 0; i < odf_list.length; i++){
+                var index = parseInt(odf_list[i].replace("Socket", ""))-1,
+                    gid = Math.floor(index / config.socketStateBits),
+                    pos = index % config.socketStateBits;
+                console.log(gid+" "+pos+" "+morSocket.socketAliasTable[gid][pos]);
+                if(morSocket.socketAliasTable[gid][pos] == null)
+                    dan.set_alias(odf_list[i], (index+1));
+                else
+                    dan.set_alias(odf_list[i], (index+1) + ":" + morSocket.socketAliasTable[gid][pos]);
+            }
+        };
         var pull = function (odf_name, data) {
             console.log(odf_name + ':' + data);
             if(odf_name.startsWith('Socket')){
@@ -22,16 +33,7 @@ var dai = function (morSocket) {
             }
             else if(odf_name == "Control"){
                 if(data[0] == "SET_DF_STATUS"){
-                    for(var i = 0; i < odf_list.length; i++){
-                        var index = parseInt(odf_list[i].replace("Socket", ""))-1,
-                            gid = Math.floor(index / config.socketStateBits),
-                            pos = index % config.socketStateBits;
-                        console.log(gid+" "+pos+" "+morSocket.socketAliasTable[gid][pos]);
-                        if(morSocket.socketAliasTable[gid][pos] == null)
-                            dan.set_alias(odf_list[i], (index+1));
-                        else
-                            dan.set_alias(odf_list[i], (index+1) + ":" + morSocket.socketAliasTable[gid][pos]);
-                    }
+                    setAliases();
                 }
             }
         };
@@ -59,7 +61,7 @@ var dai = function (morSocket) {
 
         }, function (result) {
             console.log('register:', result);
-
+            setAliases();
             var list = [];
             for(var i = 0; i < s_list.length; i++){
                 var index = parseInt(s_list[i])-1;
