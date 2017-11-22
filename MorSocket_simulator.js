@@ -1,5 +1,5 @@
 var net = require('net');
-var HOST = '127.0.0.1';
+var HOST = '140.113.215.17';
 var PORT = 7654;
 
 
@@ -18,16 +18,16 @@ client.on('data', function(data) {
 	var cmd = data.toString('hex').toUpperCase();
     var op = cmd.substring(0, 2);
     console.log(op);
-   /* if(op == "C2"){
-    	//var command;
-    	//if(i&1)
-    	//	command = "B3"+cmd.substring(2,4)+"03";
-    	//else
+    if(op == "C2"){
+    	var command;
+    	if(i&1)
+    		command = "B3"+cmd.substring(2,4)+"03";
+    	else
     		command ="E1";
     	i++;
     	var cmdByteArr = hexToBytes(command);
 
     	buffer = new Buffer(cmdByteArr);
 		client.write(buffer);
-	}*/
+	}
 });
