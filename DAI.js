@@ -77,6 +77,7 @@ var dai = function (morSocket) {
 
             morSocket.mqttClient.publish(mqttTopic.deviceInfoTopic, JSON.stringify({
                 id:morSocket.id,
+                room: morSocket.room,
                 sockets:list
             }));
 
