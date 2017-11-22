@@ -113,7 +113,12 @@ var csmapi = (function () {
             });
             res.on('end', function () {
                 if (typeof obj === 'string') {
-                    obj = JSON.parse(obj);
+                    try {
+                        obj = JSON.parse(obj);
+                    }catch(err){
+                        console.log(err);
+                        return;
+                    }
                 }
                 if (callback) {
                     callback(obj['samples']);
