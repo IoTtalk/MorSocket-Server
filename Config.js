@@ -18,7 +18,7 @@ exports.MQTTIP = "mqtt://127.0.0.1";
  OP
  E1 (回復錯誤)
 
- */
+*/
 exports.OPCode = [
     'C2',
     'B3',

@@ -323,12 +323,6 @@ mqttClient.on('message', function (topic, message) {
     }
     else if(topic == mqttTopic.aliasTopic){
         var data = JSON.parse(message);
-        /*{
-            id: string,
-            index: num,
-            alias: string
-          }
-         */
         var client = findClientByID(data["id"]);
         if(client){
             console.log(data["index"]+ " " + data["alias"]);
@@ -355,11 +349,6 @@ api.use(json_body_parser);
 api.listen(config.webServerPort);
 api.post('/' + mqttTopic.setupDeviceRoomTopic, function (req, res) {
     var data = req.body;
-    /*{
-        id: string,
-        location: string
-      }
-    */
     console.log(data);
     db.push("/room_"+data["id"], data["location"], true);
     res.end("ok");
