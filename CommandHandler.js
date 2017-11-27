@@ -58,7 +58,7 @@ CommandHandler.prototype.sendOnOffCommand = function(socketIndex, state, client)
     sendCmdSem.take(function () {
         console.log('sendOnOffCommand: ' + command);
         client.write(buffer);
-        sendCmdSem.leave();
+        setTimeout(sendCmdSem.leave, 500)
     });
 
 };

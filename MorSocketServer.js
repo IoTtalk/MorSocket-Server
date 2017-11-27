@@ -271,7 +271,6 @@ mqttClient.on('connect',function(){
                             triggerRegister = false;
                             console.log(client.socketStateTable);
                         }
-                        //setTimeout(function(){cmdHandler.sendReadStateCommand(++currentGid, client);}, 2000);
                         cmdHandler.sendReadStateCommand(++currentGid, client);
                     }
                 });
