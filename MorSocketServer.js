@@ -250,7 +250,7 @@ mqttClient.on('connect',function(){
 
                             for (var i = 0; i < config.socketStateBits; i++)
                                 client.socketStateTable[requestGid][i] = (cmdState.length > i) ?
-                                    cmdState[i] : 0;
+                                    parseInt(cmdState[i]) : 0;
                             console.log('requestGid: ' + requestGid);
                             break;
 
