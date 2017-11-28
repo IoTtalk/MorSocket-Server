@@ -86,7 +86,7 @@ CommandHandler.prototype.sendReadStateCommand = function(gid, client){
 
     buffer = new Buffer(cmdByteArr);
     sendCmdSem.take(function () {
-        console.log('sendReadStateCommand: ' + command);
+        // console.log('sendReadStateCommand: ' + command);
         client.write(buffer);
         // sendCmdSem.leave();
     });

@@ -229,7 +229,7 @@ mqttClient.on('connect',function(){
                     cmd = cmd.toString('hex').toUpperCase();
                     var op = cmd.substring(0, 2);
                     var requestGid = cmdHandler.requestGid;
-                    console.log(op);
+                    // console.log(op);
                     switch (op) {
 
                         case config.OPCode[1]: //B3
