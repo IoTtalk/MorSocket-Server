@@ -62,7 +62,7 @@ CommandHandler.prototype.sendOnOffCommand = function(socketIndex, state, client)
     sendCmdSem.take(function () {
         console.log('sendOnOffCommand: ' + command);
         client.write(buffer);
-        setTimeout(sendCmdSem.leave, 500)
+        // setTimeout(sendCmdSem.leave, 500)
     });
 
 };
@@ -88,7 +88,7 @@ CommandHandler.prototype.sendReadStateCommand = function(gid, client){
     sendCmdSem.take(function () {
         console.log('sendReadStateCommand: ' + command);
         client.write(buffer);
-        sendCmdSem.leave();
+        // sendCmdSem.leave();
     });
 };
 
