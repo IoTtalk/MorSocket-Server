@@ -229,6 +229,7 @@ mqttClient.on('connect',function(){
                     cmd = cmd.toString('hex').toUpperCase();
                     var op = cmd.substring(0, 2);
                     var requestGid = cmdHandler.requestGid;
+                    console.log('requestGid: ' + requestGid);
                     // console.log(op);
                     switch (op) {
 
@@ -248,7 +249,7 @@ mqttClient.on('connect',function(){
                             for (var i = 0; i < config.socketStateBits; i++)
                                 client.socketStateTable[requestGid][i] = (cmdState.length > i) ?
                                     cmdState[i] : 0;
-                            console.log('requestGid: ' + requestGid);
+                            // console.log('requestGid: ' + requestGid);
                             break;
 
                         case config.OPCode[2]: //E1
