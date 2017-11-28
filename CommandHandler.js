@@ -46,19 +46,14 @@ CommandHandler.prototype.sendOnOffCommand = function(socketIndex, state, client)
         console.log('offline command not send!');
         return;
     }
-
-    var posArr = client.socketStateTable[gid].slice();
-    posArr[pos] = (Number(state) != 0) ? 1 : 0;
-    client.socketStateTable[gid][pos] = Number(state);
-    state = parseInt(posArr.reverse().join(''), 2);
-
-    command = op + this.integerToHexString(gid) + this.integerToHexString(rw)
-        + this.integerToHexString(state) + this.integerToHexString(channel);
-
-    cmdByteArr = this.hexToBytes(command);
-
-    buffer = new Buffer(cmdByteArr);
     parent.sendCmdSem.take(function () {
+        var posArr = client.socketStateTable[gid].slice();
+        posArr[pos] = (Number(state) != 0) ? 1 : 0;
+        state = parseInt(posArr.reverse().join(''), 2);
+        command = op + this.integerToHexString(gid) + this.integerToHexString(rw)
+            + this.integerToHexString(state) + this.integerToHexString(channel);
+        cmdByteArr = this.hexToBytes(command);
+        buffer = new Buffer(cmdByteArr);
         parent.requestGid = gid;
         console.log('sendOnOffCommand: ' + command);
         client.write(buffer);
@@ -76,14 +71,11 @@ CommandHandler.prototype.sendReadStateCommand = function(gid, client){
         command,
         cmdByteArr,
         parent = this;
-
-    command = op + this.integerToHexString(gid) + this.integerToHexString(rw)
-        + this.integerToHexString(state) + this.integerToHexString(channel);
-
-    cmdByteArr = this.hexToBytes(command);
-
-    buffer = new Buffer(cmdByteArr);
     parent.sendCmdSem.take(function () {
+        command = op + this.integerToHexString(gid) + this.integerToHexString(rw)
+            + this.integerToHexString(state) + this.integerToHexString(channel);
+        cmdByteArr = this.hexToBytes(command);
+        buffer = new Buffer(cmdByteArr);
         console.log('sendReadStateCommand: ' + command);
         parent.requestGid = gid;
         client.write(buffer);
