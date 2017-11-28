@@ -1,6 +1,6 @@
 exports.socketServerPort = 7654;
 exports.webServerPort = 8899;
-exports.maxSocketGroups = 15;
+exports.maxSocketGroups = 7;
 exports.socketStateBits = 2;
 exports.IDFList =  [];
 exports.IoTtalkIP = "http://140.113.199.199:9999";
