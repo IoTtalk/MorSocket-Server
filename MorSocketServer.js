@@ -228,41 +228,47 @@ mqttClient.on('connect',function(){
                 client.on('data', function (cmd) {
                     cmd = cmd.toString('hex').toUpperCase();
                     var op = cmd.substring(0, 2);
+                    var requestGid = cmdHandler.requestGid;
                     console.log(op);
                     switch (op) {
 
                         case config.OPCode[1]: //B3
 
+                            /* Update socketStateTable of client */
+                            var responseGid = parseInt(cmd.substring(2, 4), 16),
+                                cmdState = parseInt(cmd.substring(4, 6), 16).toString(2).split('').reverse();
+                            if(responseGid != requestGid){
+                                console.log('response command Gid is not match request command Gid');
+                                return;
+                            }
                             /* Client state has changed, trigger register */
-                            if (client.socketStateTable[currentGid][0] == -1)
+                            if (client.socketStateTable[requestGid][0] == -1)
                                 triggerRegister = true;
 
-                            /* Update socketStateTable of client */
-                            var cmdGid = parseInt(cmd.substring(2, 4), 16), // should be equal to currentGid
-                                cmdState = parseInt(cmd.substring(4, 6), 16).toString(2).split('').reverse();
                             for (var i = 0; i < config.socketStateBits; i++)
-                                client.socketStateTable[currentGid][i] = (cmdState.length > i) ?
+                                client.socketStateTable[requestGid][i] = (cmdState.length > i) ?
                                     cmdState[i] : 0;
-                            console.log(currentGid);
+                            console.log('requestGid: ' + requestGid);
                             break;
 
                         case config.OPCode[2]: //E1
+                            requestGid = cmdHandler.requestGid;
                             /* Client state has changed, trigger register */
-                            if (client.socketStateTable[currentGid][0] != -1)
+                            if (client.socketStateTable[requestGid][0] != -1)
                                 triggerRegister = true;
 
                             /* Update socketStateTable of client */
                             for (var i = 0; i < config.socketStateBits; i++)
-                                client.socketStateTable[currentGid][i] = -1;
+                                client.socketStateTable[requestGid][i] = -1;
                             break;
 
                         default:
                             console.log('from client: ' + client.remoteAddress + 'gid: ' +
-                                currentGid + ' reply unknow cmd: ' + cmd);
+                                requestGid + ' reply unknow cmd: ' + cmd);
                             break;
 
                     }
-                    if (currentGid == cmdGid || cmdGid == undefined) {
+                    if (currentGid == requestGid) {
                         if (currentGid == config.maxSocketGroups - 1) {
                             if (triggerRegister)
                                 client.dai.register();

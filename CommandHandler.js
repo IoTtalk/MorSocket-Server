@@ -5,7 +5,10 @@
 var config = require('./Config');
 
 var CommandHandler = function(sendCmdSem){
+    /* mutual exclusive the request commands */
     this.sendCmdSem = sendCmdSem;
+    /* use to record current request command gid */
+    this.requestGid = -1;
 };
 
 CommandHandler.prototype.integerToHexString = function (d) {
@@ -37,6 +40,7 @@ CommandHandler.prototype.sendOnOffCommand = function(socketIndex, state, client)
         command,
         cmdByteArr,
         sendCmdSem = this.sendCmdSem;
+    this.requestGid = gid;
 
     /* offline, command not send*/
     if(client.socketStateTable[gid][pos] == -1){
@@ -73,6 +77,7 @@ CommandHandler.prototype.sendReadStateCommand = function(gid, client){
         command,
         cmdByteArr,
         sendCmdSem = this.sendCmdSem;
+    this.requestGid = gid;
 
     command = op + this.integerToHexString(gid) + this.integerToHexString(rw)
         + this.integerToHexString(state) + this.integerToHexString(channel);
