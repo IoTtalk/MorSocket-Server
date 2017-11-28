@@ -60,9 +60,8 @@ CommandHandler.prototype.sendOnOffCommand = function(socketIndex, state, client)
     buffer = new Buffer(cmdByteArr);
     parent.sendCmdSem.take(function () {
         parent.requestGid = gid;
-        // console.log('sendOnOffCommand: ' + command);
+        console.log('sendOnOffCommand: ' + command);
         client.write(buffer);
-        // setTimeout(sendCmdSem.leave, 500)
     });
 
 };
@@ -85,10 +84,9 @@ CommandHandler.prototype.sendReadStateCommand = function(gid, client){
 
     buffer = new Buffer(cmdByteArr);
     parent.sendCmdSem.take(function () {
-        // console.log('sendReadStateCommand: ' + command);
+        console.log('sendReadStateCommand: ' + command);
         parent.requestGid = gid;
         client.write(buffer);
-        // sendCmdSem.leave();
     });
 };
 

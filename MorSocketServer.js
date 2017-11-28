@@ -191,6 +191,7 @@ mqttClient.on('connect',function(){
                 client.socketStateTable = new Array(config.maxSocketGroups);
                 for (var i = 0; i < config.maxSocketGroups; i++)
                     client.socketStateTable[i] = new Array(config.socketStateBits).fill(-1);
+
                 /* Init socketAliasTable table */
                 try {
                     client.socketAliasTable = db.getData("/" + client.id);
@@ -200,6 +201,7 @@ mqttClient.on('connect',function(){
                     for (var i = 0; i < config.maxSocketGroups; i++)
                         client.socketAliasTable[i] = new Array(config.socketStateBits).fill(null);
                 }
+
                 /* Setup socket room */
                 try {
                     client.room = db.getData("/room_" + client.id);
@@ -207,6 +209,7 @@ mqttClient.on('connect',function(){
                 catch (error) {
                     client.room = "Others";
                 }
+
                 /* Construct sendOnOffCommand function for this client */
                 client.sendOnOffCommand = function (socketIndex, state) {
                     cmdHandler.sendOnOffCommand(socketIndex, state, client);
@@ -227,11 +230,9 @@ mqttClient.on('connect',function(){
                 /* Command received */
                 client.on('data', function (cmd) {
                     cmd = cmd.toString('hex').toUpperCase();
-                    console.log(cmd);
                     var op = cmd.substring(0, 2);
                     var requestGid = cmdHandler.requestGid;
-                    console.log('requestGid: ' + requestGid);
-                    // console.log(op);
+                    console.log(op);
                     switch (op) {
 
                         case config.OPCode[1]: //B3
@@ -250,7 +251,7 @@ mqttClient.on('connect',function(){
                             for (var i = 0; i < config.socketStateBits; i++)
                                 client.socketStateTable[requestGid][i] = (cmdState.length > i) ?
                                     cmdState[i] : 0;
-                            // console.log('requestGid: ' + requestGid);
+                            console.log('requestGid: ' + requestGid);
                             break;
 
                         case config.OPCode[2]: //E1
@@ -288,7 +289,7 @@ mqttClient.on('connect',function(){
                         triggerRegister = false;
                         console.log(client.socketStateTable);
                     }
-                    cmdHandler.sendCmdSem.leave();
+                    setTimeout(cmdHandler.sendCmdSem.leave,500);
                 });
                 /* Timeout event for detect MorSocket power off */
                 client.setTimeout(5000);
