@@ -49,7 +49,7 @@ CommandHandler.prototype.sendOnOffCommand = function(socketIndex, state, client)
 
     var posArr = client.socketStateTable[gid].slice();
     posArr[pos] = (Number(state) != 0) ? 1 : 0;
-    //client.socketStateTable[gid][pos] = Number(state);
+    client.socketStateTable[gid][pos] = Number(state);
     state = parseInt(posArr.reverse().join(''), 2);
 
     command = op + this.integerToHexString(gid) + this.integerToHexString(rw)
