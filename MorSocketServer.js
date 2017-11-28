@@ -279,6 +279,7 @@ mqttClient.on('connect',function(){
                             triggerRegister = false;
                             console.log(client.socketStateTable);
                         }
+                        cmdHandler.sendReadStateCommand(++currentGid, client);
                     }
                     else {
                         if (triggerRegister)
@@ -288,7 +289,6 @@ mqttClient.on('connect',function(){
                         console.log(client.socketStateTable);
                     }
                     cmdHandler.sendCmdSem.leave();
-                    cmdHandler.sendReadStateCommand(++currentGid, client);
                 });
                 /* Timeout event for detect MorSocket power off */
                 client.setTimeout(5000);
