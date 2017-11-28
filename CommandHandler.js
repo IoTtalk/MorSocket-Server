@@ -8,7 +8,7 @@ var CommandHandler = function(sendCmdSem){
     /* mutual exclusive the request commands */
     this.sendCmdSem = sendCmdSem;
     /* use to record current request command gid */
-    this.requestGid = -1;
+    this.requestGid = 0;
 };
 
 CommandHandler.prototype.integerToHexString = function (d) {

@@ -226,7 +226,6 @@ mqttClient.on('connect',function(){
 
                 /* Command received */
                 client.on('data', function (cmd) {
-                    console.log(cmd);
                     cmd = cmd.toString('hex').toUpperCase();
                     var op = cmd.substring(0, 2);
                     var requestGid = cmdHandler.requestGid;
