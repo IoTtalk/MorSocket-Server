@@ -1,7 +1,7 @@
 
 var config = require("./Config"),
     mqttTopic = require('./MqttTopic');
-var dai = function (morSocket) {
+var dai = function (morSocket, IoTtalkIP) {
 
     var dan = require("./DAN").dan();
     var deregister = function(){
@@ -52,7 +52,8 @@ var dai = function (morSocket) {
             dan.deregister();
             return;
         }
-        dan.init(pull, config.IoTtalkIP , macAddr, {
+        IoTtalkIP = (IoTtalkIP == undefined) ? config.IoTtalkIP : IoTtalkIP;
+        dan.init(pull, IoTtalkIP , macAddr, {
             'dm_name': 'MorSocket',
             'd_name' : macAddr,
             'u_name': 'yb',

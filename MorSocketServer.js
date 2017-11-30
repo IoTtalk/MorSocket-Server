@@ -24,7 +24,8 @@ var /* For create tcp server */
     semaphore = require('semaphore'),
     commandHandler = require('./CommandHandler').CommandHandler,
     /* Record all connected MorSocket clients */
-    clientArray = [];
+    clientArray = [],
+    IoTtalkIP = process.argv[2];
 
 var findClientByID = function(clientID){
     var client = null;
@@ -216,7 +217,7 @@ mqttClient.on('connect',function(){
                 };
 
                 /* Init DAI of the client */
-                client.dai = dai(client);
+                client.dai = dai(client, IoTtalkIP);
 
                 /* Current polling gid */
                 var currentGid = 0;
