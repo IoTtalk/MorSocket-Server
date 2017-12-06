@@ -1,4 +1,4 @@
-var request = require('request').default({jar: true});
+var request = require('request');
 var csmapi = (function () {
     var ENDPOINT;
     function set_endpoint (endpoint) {
