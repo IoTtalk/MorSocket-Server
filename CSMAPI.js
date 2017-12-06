@@ -1,4 +1,4 @@
-var http = require('http');
+var request = require('request');
 var csmapi = (function () {
     var ENDPOINT;
     function set_endpoint (endpoint) {
@@ -10,211 +10,139 @@ var csmapi = (function () {
     }
 
     function register (mac_addr, profile, callback) {
-        // $.ajax({
-        //     type: 'POST',
-        //     url: ENDPOINT +'/'+ mac_addr,
-        //     data: JSON.stringify({'profile': profile}),
-        //     contentType:"application/json; charset=utf-8",
-        // }).done(function () {
-        //     if (callback) {
-        //         callback(true);
-        //     }
-        // }).fail(function () {
-        //     if (callback) {
-        //         callback(false);
-        //     }
-        // });
-        var data = JSON.stringify({'profile': profile});
+
         var options = {
-            host: ENDPOINT,
-            port: 9999,
-            path:  '/'+ mac_addr,
-            method: 'POST',
-            headers: {
+            url:'http://' + ENDPOINT + ':9999' + '/'+mac_addr,
+            method:'POST',
+            json: {'profile': profile},
+            headers:{
                 'Content-Type': 'application/json; charset=utf-8',
-                'Content-Length': data.length
             }
         };
-        var req = http.request(options, function(res) {
-            if (res.statusCode == 200) {
-                callback(true);
-            }
-            else{
-                callback(false);
+        request(options, function(err, res, body){
+            if(callback){
+                if (res.statusCode == 200) {
+                    if(callback)
+                        callback(true);
+                }
+                else{
+                    if(callback){
+                        callback(false);
+                    }
+                    console.log(body);
+                }
             }
         });
-        req.write(data);
-        req.end();
     }
-
     function deregister (mac_addr, callback) {
-        // $.ajax({
-        //     type: 'DELETE',
-        //     url: ENDPOINT +'/'+ mac_addr,
-        //     contentType:"application/json; charset=utf-8",
-        // }).done(function () {
-        //     if (callback) {
-        //         callback(true);
-        //     }
-        // }).fail(function () {
-        //     if (callback) {
-        //         callback(false);
-        //     }
-        // });
         var options = {
-            host: ENDPOINT,
-            port: 9999,
-            path:  '/'+ mac_addr,
-            method: 'DELETE',
-            headers: {
+            url:'http://' + ENDPOINT + ':9999'+'/'+mac_addr,
+            method:'DELETE',
+            headers:{
                 'Content-Type': 'application/json; charset=utf-8',
             }
         };
-        var req = http.request(options, function(res) {
-            if (callback) {
-                callback(true);
+        request(options, function(err, res, body){
+            if(callback){
+                if (res.statusCode == 200) {
+                    if(callback)
+                        callback(true);
+                }
+                else{
+                    if(callback)
+                        callback(false);
+                    console.log(body);
+                }
             }
         });
-        req.end();
     }
-
     function pull (mac_addr, odf_name, callback) {
-        // $.ajax({
-        //     type: 'GET',
-        //     url: ENDPOINT +'/'+ mac_addr +'/'+ odf_name,
-        //     contentType:"application/json; charset=utf-8",
-        // }).done(function (obj) {
-        //     if (typeof obj === 'string') {
-        //         obj = JSON.parse(obj);
-        //     }
-        //
-        //     if (callback) {
-        //         callback(obj['samples']);
-        //     }
-        // }).fail(function () {
-        //     if (callback) {
-        //         callback([]);
-        //     }
-        // });
         var options = {
-            host: ENDPOINT,
-            port: 9999,
-            path:  '/'+ mac_addr+'/'+odf_name,
-            method: 'GET',
-            headers: {
+            url:'http://' + ENDPOINT + ':9999' + '/' + mac_addr + '/' + odf_name,
+            method:'GET',
+            headers:{
                 'Content-Type': 'application/json; charset=utf-8',
             }
         };
-        var req = http.request(options, function(res) {
-            res.setEncoding('utf8');
-            var obj = '';
-            res.on('data', function(chunk){
-                obj += chunk;
-            });
-            res.on('end', function () {
-                if (typeof obj === 'string') {
-                    try {
-                        obj = JSON.parse(obj);
-                    }catch(err){
-                        console.log(err);
-                        return;
+        request(options, function(err, res, body){
+            if(callback){
+                if (res.statusCode == 200) {
+                    if(callback){
+                        body = JSON.parse(body);
+                        callback(body['samples']);
                     }
                 }
-                if (callback) {
-                    callback(obj['samples']);
+                else{
+                    console.log(body);
                 }
-            });
-
+            }
         });
-        req.end();
     }
 
     function push (mac_addr, idf_name, data, callback) {
-        // $.ajax({
-        //     type: 'PUT',
-        //     url: ENDPOINT +'/'+ mac_addr +'/'+ idf_name,
-        //     data: JSON.stringify({'data': data}),
-        //     contentType:"application/json; charset=utf-8",
-        // }).done(function () {
-        //     if (callback) {
-        //         callback(true);
-        //     }
-        // }).fail(function () {
-        //     if (callback) {
-        //         callback(false);
-        //     }
-        // });
+
         var options = {
-            host: ENDPOINT,
-            port: 9999,
-            path:  '/'+ mac_addr+'/'+idf_name,
-            method: 'PUT',
-            data:JSON.stringify({'data': data}),
-            headers: {
+            url:'http://' + ENDPOINT + ':9999' + '/' + mac_addr + '/' + idf_name,
+            method:'PUT',
+            json:{'data': data},
+            headers:{
                 'Content-Type': 'application/json; charset=utf-8',
-                'Content-Length': data.length
             }
         };
-        var req = http.request(options, function() {
-            if (callback) {
-                callback(true);
+        request(options, function(err, res, body){
+            if(callback){
+                if (res.statusCode == 200) {
+                    callback(true);
+                }
+                else{
+                    callback(false);
+                    console.log(body);
+                }
             }
         });
-        req.write(data);
-        req.end();
+
     }
     function get_alias(mac_addr, df_name, callback){
         var options = {
-            host: ENDPOINT,
-            port: 9999,
-            path:  '/get_alias/' + mac_addr + '/' + df_name,
-            method: 'GET',
-            headers: {
+            url:'http://' + ENDPOINT + ':9999/get_alias/' + mac_addr + '/' + df_name,
+            method:'GET',
+            headers:{
                 'Content-Type': 'application/json; charset=utf-8',
             }
         };
-        var req = http.request(options, function (res) {
-            res.setEncoding('utf8');
-            var obj = '';
-            res.on('data', function (chunk) {
-                obj += chunk;
-            });
-            res.on('end', function () {
-                if (typeof obj === 'string') {
-                    obj = JSON.parse(obj);
+        request(options, function(err, res, body){
+            if(callback){
+                if (res.statusCode == 200) {
+                    if(callback){
+                        body = JSON.parse(body);
+                        callback(body['alias_name']);
+                    }
                 }
-                if (callback) {
-                    callback(obj["alias_name"]);
+                else{
+                    console.log(body);
                 }
-            });
-        });
-        req.end();
+            }
 
+        });
     }
-    function set_alias(mac_addr, df_name, alias){
+    function set_alias(mac_addr, df_name, alias, callback){
         var options = {
-            host: ENDPOINT,
-            port: 9999,
-            path:  '/set_alias/' + mac_addr + '/' + df_name + '/alias?name=' + alias,
-            method: 'GET',
-            headers: {
+            url:'http://' + ENDPOINT + ':9999/set_alias/' + mac_addr + '/' + df_name + '/alias?name=' + alias,
+            method:'GET',
+            headers:{
                 'Content-Type': 'application/json; charset=utf-8',
             }
         };
-        var req = http.request(options, function (res) {
-            res.setEncoding('utf8');
-            var obj = '';
-            res.on('data', function (chunk) {
-                obj += chunk;
-            });
-            res.on('end', function () {
-                // if (typeof obj === 'string') {
-                //     obj = JSON.parse(obj);
-                // }
-            });
+        request(options, function(err, res, body){
+            if(callback){
+                if (res.statusCode == 200)
+                    callback(true);
+                else {
+                    callback(false);
+                    console.log(body);
+                }
+            }
         });
-        req.end();
-
     }
     return {
         'set_endpoint': set_endpoint,

@@ -2,6 +2,7 @@
   "name": "MorSocket-Server",
   "private": true,
   "dependencies": {
+    "request": "",
     "ejs": "1.x",
     "express": "4.x",
     "node-json-db": "^0.7.3",
