@@ -82,4 +82,21 @@ CommandHandler.prototype.sendReadStateCommand = function(gid, client){
     });
 };
 
+CommandHandler.prototype.sendReadBleMacCommand = function(client){
+
+    var op = config.OPCode[1],
+        channel = 0,
+        buffer,
+        command,
+        cmdByteArr,
+        parent = this;
+    parent.sendCmdSem.take(function () {
+        command = op +  parent.integerToHexString(channel);
+        cmdByteArr = parent.hexToBytes(command);
+        buffer = new Buffer(cmdByteArr);
+        console.log('sendReadBleMacCommand: ' + command);
+        client.write(buffer);
+    });
+};
+
 exports.CommandHandler = CommandHandler;

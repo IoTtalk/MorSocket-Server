@@ -185,6 +185,8 @@ mqttClient.on('connect',function(){
                 /* Will retrieve from client in later version */
                 // client.id = shortID.generate();
                 client.id = "f119d466";
+                // client.id = cmdHandler.sendReadBleMacCommand(client);
+
                 /* MqttPublisher will be use to publish data to MorSocket APP when register */
                 client.mqttClient = mqttClient;
 
@@ -236,7 +238,7 @@ mqttClient.on('connect',function(){
                     console.log(op);
                     switch (op) {
 
-                        case config.OPCode[1]: //B3
+                        case config.OPCode[2]: //B3
 
                             /* Update socketStateTable of client */
                             var responseGid = parseInt(cmd.substring(2, 4), 16),
@@ -255,7 +257,7 @@ mqttClient.on('connect',function(){
                             console.log('requestGid: ' + requestGid);
                             break;
 
-                        case config.OPCode[2]: //E1
+                        case config.OPCode[3]: //E1
                             requestGid = cmdHandler.requestGid;
                             /* Client state has changed, trigger register */
                             if (client.socketStateTable[requestGid][0] != -1)
@@ -290,7 +292,7 @@ mqttClient.on('connect',function(){
                         triggerRegister = false;
                         console.log(client.socketStateTable);
                     }
-                    setTimeout(cmdHandler.sendCmdSem.leave,500);
+                    setTimeout(cmdHandler.sendCmdSem.leave,1000);
                 });
                 /* Timeout event for detect MorSocket power off */
                 client.setTimeout(5000);
