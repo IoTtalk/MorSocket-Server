@@ -25,7 +25,10 @@ var /* For create tcp server */
     commandHandler = require('./CommandHandler').CommandHandler,
     /* Record all connected MorSocket clients */
     clientArray = [],
-    IoTtalkIP = process.argv[2];
+	/* Get IoTtalkIP from external */
+    IoTtalkIP = process.argv[2],
+	/* Record setup device room data from setupDeviceRoomTopic */
+	setupDeviceRoom = null;
 
 var findClientByID = function(clientID){
     var client = null;
@@ -62,107 +65,19 @@ var makeDevicesArray = function(){
                 }
             }
         }
-        var device = {
-            id: clientArray[i].id,
-            room: clientArray[i].room,
-            sockets:sockets
-        };
-        devices.push(device);
+		if(clientArray[i].id != undefined){
+			devices.push({
+				id: clientArray[i].id,
+				room: clientArray[i].room,
+				sockets:sockets
+			});
+		}
     }
     console.log(JSON.stringify(devices));
     return devices;
 };
 
 mqttClient.on('connect',function(){
-
-    /********For testing****************************************/
-    // var dan = require("./DAN").dan();
-    // setInterval(function(){
-    //     dan.init(function(){}, config.IoTtalkIP , shortID.generate(), {
-    //         'dm_name': 'MorSocket',
-    //         'd_name' : shortID.generate()+'.MorSocket',
-    //         'u_name': 'yb',
-    //         'is_sim': false,
-    //         'df_list': ['Socket1']
-    //     },function(result){
-    //         console.log('register:', result);
-    //     })
-    // },5);
-    // process.on('uncaughtException', function (err) {
-    //     console.log('Caught exception: ' + err);
-    // });
-
-    // var client = {};
-    // clientArray.push(client);
-    // console.log(clientArray.length);
-    // client.id = "f119d466";
-    // try {
-    //     client.room = db.getData("/room_" + client.id);
-    // }catch(error){
-    //     client.room = "Others";
-    // }
-    // /* init socketStateTable table */
-    // client.socketStateTable = new Array(config.maxSocketGroups);
-    // for(var i = 0; i < config.maxSocketGroups; i++)
-    //     client.socketStateTable[i] = new Array(config.socketStateBits).fill(-1);
-    // client.socketStateTable[0][0] = 1;
-    // client.socketStateTable[0][1] = 1;
-    // client.socketStateTable[1][0] = 0;
-    // client.socketStateTable[1][1] = 0;
-    // client.socketStateTable[2][0] = 0;
-    // client.socketStateTable[2][1] = 0;
-    // client.socketStateTable[3][0] = 0;
-    // client.socketStateTable[3][1] = 0;
-    // try {
-    //     client.socketAliasTable = db.getData("/"+client.id);
-    //     console.log(socketAliasTable);
-    // }
-    // catch (error){
-    //     client.socketAliasTable = new Array(config.maxSocketGroups);
-    //     for(var i = 0; i < config.maxSocketGroups; i++)
-    //         client.socketAliasTable[i] = new Array(config.socketStateBits).fill(null);
-    // }
-    // mqttClient.publish(deviceInfoTopic, JSON.stringify({
-    //     id:client.id,
-    //     room:client.room,
-    //     sockets:[{
-    //         index:1,
-    //         state:true,
-    //         alias:client.socketAliasTable[0][0]
-    //     },{
-    //         index:2,
-    //         state:true,
-    //         alias:client.socketAliasTable[0][1]
-    //     },{
-    //         index:3,
-    //         state:false,
-    //         alias:client.socketAliasTable[1][0]
-    //     },{
-    //         index:4,
-    //         state:false,
-    //         alias:client.socketAliasTable[1][1]
-    //     },{
-    //         index:5,
-    //         state:false,
-    //         alias:client.socketAliasTable[2][0]
-    //     },{
-    //         index:6,
-    //         state:false,
-    //         alias:client.socketAliasTable[2][1]
-    //     },{
-    //         index:7,
-    //         state:false,
-    //         alias:client.socketAliasTable[3][0]
-    //     },{
-    //         index:8,
-    //         state:false,
-    //         alias:client.socketAliasTable[3][1]
-    //     }]
-    // }));
-    // client.dai = dai(client);
-    // client.dai.register();
-    // return;
-    /********For testing************************************/
 
     mqttClient.subscribe(mqttTopic.syncDeviceInfoTopic);
     mqttClient.subscribe(mqttTopic.switchTopic);
@@ -182,10 +97,8 @@ mqttClient.on('connect',function(){
                 clientArray.push(client);
                 console.log(clientArray.length);
 
-                /* Will retrieve from client in later version */
-                // client.id = shortID.generate();
-                client.id = "f119d466";
-                // client.id = cmdHandler.sendReadBleMacCommand(client);
+                /* Retrieve client BEL MAC address */
+                cmdHandler.sendReadBleMacCommand(client);
 
                 /* MqttPublisher will be use to publish data to MorSocket APP when register */
                 client.mqttClient = mqttClient;
@@ -195,23 +108,6 @@ mqttClient.on('connect',function(){
                 for (var i = 0; i < config.maxSocketGroups; i++)
                     client.socketStateTable[i] = new Array(config.socketStateBits).fill(-1);
 
-                /* Init socketAliasTable table */
-                try {
-                    client.socketAliasTable = db.getData("/" + client.id);
-                }
-                catch (error) {
-                    client.socketAliasTable = new Array(config.maxSocketGroups);
-                    for (var i = 0; i < config.maxSocketGroups; i++)
-                        client.socketAliasTable[i] = new Array(config.socketStateBits).fill(null);
-                }
-
-                /* Setup socket room */
-                try {
-                    client.room = db.getData("/room_" + client.id);
-                }
-                catch (error) {
-                    client.room = "Others";
-                }
 
                 /* Construct sendOnOffCommand function for this client */
                 client.sendOnOffCommand = function (socketIndex, state) {
@@ -267,6 +163,35 @@ mqttClient.on('connect',function(){
                             for (var i = 0; i < config.socketStateBits; i++)
                                 client.socketStateTable[requestGid][i] = -1;
                             break;
+
+						case config.OPCode[1]: //C3:
+							client.id = cmd.substring(2, 14);				
+							console.log("MAC address: " + cmd.substring(2,14));
+							if(setupDeviceRoom != null){
+								db.push("/room_" + client.id, setupDeviceRoom["location"], true);
+								setupDeviceRoom = null;
+							}
+							else
+								console.log("setup device room error");
+
+							/* Init socketAliasTable table */
+							try {
+								client.socketAliasTable = db.getData("/" + client.id);
+							}
+							catch (error) {
+								client.socketAliasTable = new Array(config.maxSocketGroups);
+								for (var i = 0; i < config.maxSocketGroups; i++)
+									client.socketAliasTable[i] = new Array(config.socketStateBits).fill(null);
+							}
+
+							/* Setup socket room */
+							try {
+								client.room = db.getData("/room_" + client.id);
+							}
+							catch (error) {
+								client.room = "Others";
+							}
+							break;
 
                         default:
                             console.log('from client: ' + client.remoteAddress + 'gid: ' +
@@ -369,6 +294,7 @@ api.listen(config.webServerPort);
 api.post('/' + mqttTopic.setupDeviceRoomTopic, function (req, res) {
     var data = req.body;
     console.log(data);
-    db.push("/room_"+data["id"], data["location"], true);
+	setupDeviceRoom = data;
+//    db.push("/room_"+data["id"], data["location"], true);
     res.end("ok");
 });
