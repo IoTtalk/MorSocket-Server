@@ -25,10 +25,10 @@ var /* For create tcp server */
     commandHandler = require('./CommandHandler').CommandHandler,
     /* Record all connected MorSocket clients */
     clientArray = [],
-	/* Get IoTtalkIP from external */
+    /* Get IoTtalkIP from external */
     IoTtalkIP = process.argv[2],
-	/* Record setup device room data from setupDeviceRoomTopic */
-	setupDeviceRoom = null;
+    /* Record setup device room data from setupDeviceRoomTopic */
+    setupDeviceRoom = null;
 
 var findClientByID = function(clientID){
     var client = null;
@@ -65,13 +65,13 @@ var makeDevicesArray = function(){
                 }
             }
         }
-		if(clientArray[i].id != undefined){
-			devices.push({
-				id: clientArray[i].id,
-				room: clientArray[i].room,
-				sockets:sockets
-			});
-		}
+        if(clientArray[i].id != undefined){
+            devices.push({
+                id: clientArray[i].id,
+                room: clientArray[i].room,
+                sockets:sockets
+            });
+        }
     }
     console.log(JSON.stringify(devices));
     return devices;
@@ -164,34 +164,34 @@ mqttClient.on('connect',function(){
                                 client.socketStateTable[requestGid][i] = -1;
                             break;
 
-						case config.OPCode[1]: //C3:
-							client.id = cmd.substring(2, 14);				
-							console.log("MAC address: " + cmd.substring(2,14));
-							if(setupDeviceRoom != null){
-								db.push("/room_" + client.id, setupDeviceRoom["location"], true);
-								setupDeviceRoom = null;
-							}
-							else
-								console.log("setup device room error");
+                        case config.OPCode[1]: //C3:
+                            client.id = cmd.substring(2, 14);                
+                            console.log("MAC address: " + cmd.substring(2,14));
+                            if(setupDeviceRoom != null){
+                                db.push("/room_" + client.id, setupDeviceRoom["location"], true);
+                                setupDeviceRoom = null;
+                            }
+                            else
+                                console.log("setup device room error");
 
-							/* Init socketAliasTable table */
-							try {
-								client.socketAliasTable = db.getData("/" + client.id);
-							}
-							catch (error) {
-								client.socketAliasTable = new Array(config.maxSocketGroups);
-								for (var i = 0; i < config.maxSocketGroups; i++)
-									client.socketAliasTable[i] = new Array(config.socketStateBits).fill(null);
-							}
+                            /* Init socketAliasTable table */
+                            try {
+                                client.socketAliasTable = db.getData("/" + client.id);
+                            }
+                            catch (error) {
+                                client.socketAliasTable = new Array(config.maxSocketGroups);
+                                for (var i = 0; i < config.maxSocketGroups; i++)
+                                    client.socketAliasTable[i] = new Array(config.socketStateBits).fill(null);
+                            }
 
-							/* Setup socket room */
-							try {
-								client.room = db.getData("/room_" + client.id);
-							}
-							catch (error) {
-								client.room = "Others";
-							}
-							break;
+                            /* Setup socket room */
+                            try {
+                                client.room = db.getData("/room_" + client.id);
+                            }
+                            catch (error) {
+                                client.room = "Others";
+                            }
+                            break;
 
                         default:
                             console.log('from client: ' + client.remoteAddress + 'gid: ' +
@@ -294,7 +294,7 @@ api.listen(config.webServerPort);
 api.post('/' + mqttTopic.setupDeviceRoomTopic, function (req, res) {
     var data = req.body;
     console.log(data);
-	setupDeviceRoom = data;
+    setupDeviceRoom = data;
 //    db.push("/room_"+data["id"], data["location"], true);
     res.end("ok");
 });
