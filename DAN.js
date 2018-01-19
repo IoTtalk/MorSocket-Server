@@ -5,7 +5,7 @@ var csmapi = require('./CSMAPI').csmapi,
 var dan = (function () {
     var RETRY_COUNT = 3;
     var RETRY_INTERVAL = 200;
-    var POLLING_INTERVAL = 10;
+    var POLLING_INTERVAL = 200;
     var _pull;
     var _mac_addr = '';
     var _profile = {};
@@ -41,7 +41,7 @@ var dan = (function () {
         var retry_count = 0;
         function register_callback (result) {
             if (result) {
-                if (!_registered) {
+                //if (!_registered) {
                     _registered = true;
                     _df_list = profile['df_list'].slice();
                     for (var i = 0; i < _df_list.length; i++) {
@@ -52,7 +52,7 @@ var dan = (function () {
                         _suspended = true;
                     }
                     setTimeout(pull_ctl, 0);
-                }
+                //}
                 callback(true);
             } else {
                 if (retry_count < 2) {
@@ -91,11 +91,13 @@ var dan = (function () {
     }
 
     function pull_odf (index) {
+		//console.log('odf' + index);
         if (!_registered) {
             return;
         }
 
-        if (_suspended || index >= _df_list.length) {
+		//if (_suspended || index >= _df_list.length) {
+        if (index >= _df_list.length) {
             setTimeout(pull_ctl, POLLING_INTERVAL);
             return;
         }
@@ -125,6 +127,7 @@ var dan = (function () {
                 break;
             case 'SUSPEND':
                 _suspended = true;
+				console.log("suspended");
                 break;
             case 'SET_DF_STATUS':
                 flags = data[1]['cmd_params'][0]
@@ -134,7 +137,8 @@ var dan = (function () {
                 }
 
                 for (var i = 0; i < _df_list.length; i++) {
-                    _df_selected[_df_list[i]] = (flags[i] == '1');
+					_df_selected[_df_list[i]] = 1;
+                    //_df_selected[_df_list[i]] = (flags[i] == '1');
                 }
                 break;
             default:
