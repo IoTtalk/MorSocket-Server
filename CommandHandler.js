@@ -47,6 +47,10 @@ CommandHandler.prototype.sendOnOffCommand = function(socketIndex, state, client)
             return;
         }
         var posArr = client.socketStateTable[gid].slice();
+		posArr.forEach(function(state, index) {
+			if(state == -2)
+				posArr[index] = 0;
+		});
         posArr[pos] = (Number(state) != 0) ? 1 : 0;
         state = parseInt(posArr.reverse().join(''), 2);
         command = op + parent.integerToHexString(gid) + parent.integerToHexString(rw)

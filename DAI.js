@@ -40,10 +40,13 @@ var dai = function (morSocket, IoTtalkIP) {
         for(var i = 0; i < morSocket.socketStateTable.length; i++){
             var states = morSocket.socketStateTable[i].length;
             for(var j = 0; j < states; j++){
-                if(morSocket.socketStateTable[i][j] > 0){
+                if(morSocket.socketStateTable[i][j] >= 0){
                     odf_list.push('Socket' + (i*states+(j+1)));
                     s_list.push((i*states+(j+1) >= 10) ? (i*states+(j+1)).toString() : "0" + (i*states+(j+1)).toString());
                 }
+				else if(morSocket.socketStateTable[i][j] == -2){
+                    s_list.push((i*states+(j+1) >= 10) ? (i*states+(j+1)).toString() : "0" + (i*states+(j+1)).toString());
+				}	
             }
         }
 
@@ -71,7 +74,8 @@ var dai = function (morSocket, IoTtalkIP) {
                 var s = {
                     index: parseInt(s_list[i]),
                     state: (morSocket.socketStateTable[gid][pos] == 1),
-                    alias: morSocket.socketAliasTable[gid][pos]
+                    alias: morSocket.socketAliasTable[gid][pos],
+					disable: (morSocket.socketStateTable[gid][pos] == -2)
                 };
                 list.push(s);
             }

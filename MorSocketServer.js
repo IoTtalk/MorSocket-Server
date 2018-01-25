@@ -61,6 +61,7 @@ var makeDevicesArray = function(){
                     socket["index"] = (j*config.socketStateBits+k+1);
                     socket["state"] = (clientArray[i].socketStateTable[j][k] == 1) ? true : false;
                     socket["alias"] = clientArray[i].socketAliasTable[j][k];
+					socket["disable"] = (clientArray[i].socketStateTable[j][k] == -2) ? true :false; 
                     sockets.push(socket);
                 }
             }
@@ -147,10 +148,12 @@ mqttClient.on('connect',function(){
                             /* Client state has changed, trigger register */
                             if (client.socketStateTable[requestGid][0] == -1)
                                 triggerRegister = true;
-
-                            for (var i = 0; i < config.socketStateBits; i++)
-                                client.socketStateTable[requestGid][i] = (cmdState.length > i) ?
-                                    parseInt(cmdState[i]) : 0;
+                            for (var i = 0; i < config.socketStateBits; i++){
+                                if(client.socketStateTable[requestGid][i] != -2){
+									client.socketStateTable[requestGid][i] = (cmdState.length > i) ?
+                                    	parseInt(cmdState[i]) : 0;
+								}
+							}
                             console.log('requestGid: ' + requestGid);
                             break;
 
@@ -272,12 +275,15 @@ mqttClient.on('message', function (topic, message) {
             index = parseInt(data["index"]) - 1,
             gid = Math.floor(index / config.socketStateBits),
             pos = index % config.socketStateBits;
-        console.log(data["index"]+ "disable: " + data["disable"]);
+        console.log(data["index"]+ " disable: " + data["disable"]);
         if(client){
-            if(data["disable"])
+            if(data["disable"]){
                 client.socketStateTable[gid][pos] = -2;
+				console.log(gid+" " + pos);
+				console.log(client.socketStateTable);
+			}
             else
-                client.socketStateTable[gid][pos] = -1;
+                client.socketStateTable[gid][pos] = 0;
             client.dai.register();
         }
         else{

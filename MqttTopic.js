@@ -72,7 +72,7 @@ exports.aliasTopic = "Alias";
 *  when user setup the MorSocket.
 *  {
 *       id: MorSocket ID (String),
-*       location: string
+*       location: place (String)
 *  }
 * */
 exports.setupDeviceRoomTopic = "SetupDeviceRoom";
