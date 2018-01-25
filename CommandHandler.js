@@ -23,9 +23,8 @@ CommandHandler.prototype.hexToBytes = function(hex) {
 };
 
 CommandHandler.prototype.sendOnOffCommand = function(socketIndex, state, client){
-    socketIndex = parseInt(socketIndex);
-    socketIndex--;
 
+    socketIndex = parseInt(socketIndex)-1;
     var op = config.OPCode[0],
         gid = Math.floor(socketIndex / config.socketStateBits),
 

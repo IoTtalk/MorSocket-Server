@@ -49,6 +49,15 @@ exports.syncDeviceInfoTopic = "SyncDeviceInfo";
 * */
 exports.switchTopic = "Switch";
 
+/* MorSocketCtl APP will publish SwitchDisable topic when user disable any socket.
+ *  {
+ *       id: MorSocket ID (String),
+ *       index: socket index in this MorSocket(Integer),
+ *       disable: disable/enable (Boolean)
+ *  }
+ * */
+exports.switchDisableTopic = "SwitchDisable";
+
 /* MorSocketCtl APP will publish Alias topic when user change socket alias.
  *  {
  *       id: MorSocket ID (String),

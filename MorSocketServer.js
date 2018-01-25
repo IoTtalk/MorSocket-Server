@@ -81,6 +81,7 @@ mqttClient.on('connect',function(){
 
     mqttClient.subscribe(mqttTopic.syncDeviceInfoTopic);
     mqttClient.subscribe(mqttTopic.switchTopic);
+    mqttClient.subscribe(mqttTopic.switchDisableTopic);
     mqttClient.subscribe(mqttTopic.aliasTopic);
 
     /* socket server start */
@@ -260,6 +261,24 @@ mqttClient.on('message', function (topic, message) {
         if(client){
             console.log(data["index"]+ " " + data["state"]);
             client.sendOnOffCommand(data["index"], data["state"]);
+        }
+        else{
+            console.log("device not exist!");
+        }
+    }
+    else if(topic == mqttTopic.switchDisableTopic){
+        var data = JSON.parse(message),
+            client = findClientByID(data["id"]),
+            index = parseInt(data["index"]) - 1,
+            gid = Math.floor(index / config.socketStateBits),
+            pos = index % config.socketStateBits;
+        console.log(data["index"]+ "disable: " + data["disable"]);
+        if(client){
+            if(data["disable"])
+                client.socketStateTable[gid][pos] = -2;
+            else
+                client.socketStateTable[gid][pos] = -1;
+            client.dai.register();
         }
         else{
             console.log("device not exist!");

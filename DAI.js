@@ -40,7 +40,7 @@ var dai = function (morSocket, IoTtalkIP) {
         for(var i = 0; i < morSocket.socketStateTable.length; i++){
             var states = morSocket.socketStateTable[i].length;
             for(var j = 0; j < states; j++){
-                if(morSocket.socketStateTable[i][j] != -1){
+                if(morSocket.socketStateTable[i][j] > 0){
                     odf_list.push('Socket' + (i*states+(j+1)));
                     s_list.push((i*states+(j+1) >= 10) ? (i*states+(j+1)).toString() : "0" + (i*states+(j+1)).toString());
                 }
