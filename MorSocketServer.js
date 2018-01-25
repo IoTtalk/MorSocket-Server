@@ -106,6 +106,11 @@ mqttClient.on('connect',function(){
                 client.mqttClient = mqttClient;
 
                 /* Init socketStateTable table */
+                /*  0 represent off,
+                 *  1 represent on ,
+                 * -1 represent offline,
+                 * -2 represent disable
+                 * */
                 client.socketStateTable = new Array(config.maxSocketGroups);
                 for (var i = 0; i < config.maxSocketGroups; i++)
                     client.socketStateTable[i] = new Array(config.socketStateBits).fill(-1);
