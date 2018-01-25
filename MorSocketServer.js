@@ -61,7 +61,7 @@ var makeDevicesArray = function(){
                     socket["index"] = (j*config.socketStateBits+k+1);
                     socket["state"] = (clientArray[i].socketStateTable[j][k] == 1) ? true : false;
                     socket["alias"] = clientArray[i].socketAliasTable[j][k];
-					socket["disable"] = (clientArray[i].socketStateTable[j][k] == -2) ? true :false; 
+                    socket["disable"] = (clientArray[i].socketStateTable[j][k] == -2) ? true :false; 
                     sockets.push(socket);
                 }
             }
@@ -150,10 +150,10 @@ mqttClient.on('connect',function(){
                                 triggerRegister = true;
                             for (var i = 0; i < config.socketStateBits; i++){
                                 if(client.socketStateTable[requestGid][i] != -2){
-									client.socketStateTable[requestGid][i] = (cmdState.length > i) ?
-                                    	parseInt(cmdState[i]) : 0;
-								}
-							}
+                                    client.socketStateTable[requestGid][i] = (cmdState.length > i) ?
+                                        parseInt(cmdState[i]) : 0;
+                                }
+                            }
                             console.log('requestGid: ' + requestGid);
                             break;
 
@@ -279,9 +279,9 @@ mqttClient.on('message', function (topic, message) {
         if(client){
             if(data["disable"]){
                 client.socketStateTable[gid][pos] = -2;
-				console.log(gid+" " + pos);
-				console.log(client.socketStateTable);
-			}
+                console.log(gid+" " + pos);
+                console.log(client.socketStateTable);
+            }
             else
                 client.socketStateTable[gid][pos] = 0;
             client.dai.register();

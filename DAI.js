@@ -44,9 +44,9 @@ var dai = function (morSocket, IoTtalkIP) {
                     odf_list.push('Socket' + (i*states+(j+1)));
                     s_list.push((i*states+(j+1) >= 10) ? (i*states+(j+1)).toString() : "0" + (i*states+(j+1)).toString());
                 }
-				else if(morSocket.socketStateTable[i][j] == -2){
+                else if(morSocket.socketStateTable[i][j] == -2){
                     s_list.push((i*states+(j+1) >= 10) ? (i*states+(j+1)).toString() : "0" + (i*states+(j+1)).toString());
-				}	
+                }   
             }
         }
 
@@ -75,7 +75,7 @@ var dai = function (morSocket, IoTtalkIP) {
                     index: parseInt(s_list[i]),
                     state: (morSocket.socketStateTable[gid][pos] == 1),
                     alias: morSocket.socketAliasTable[gid][pos],
-					disable: (morSocket.socketStateTable[gid][pos] == -2)
+                    disable: (morSocket.socketStateTable[gid][pos] == -2)
                 };
                 list.push(s);
             }
@@ -91,8 +91,8 @@ var dai = function (morSocket, IoTtalkIP) {
             //catches ctrl+c event
             process.on('SIGINT', function(){
                 dan.deregister(function(){
-					process.exit(1);
-				});
+                    process.exit(1);
+                });
             });
             //catches uncaught exceptions
             process.on('uncaughtException', dan.deregister);
