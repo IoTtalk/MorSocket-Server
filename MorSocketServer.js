@@ -118,8 +118,10 @@ mqttClient.on('connect',function(){
                                 }
                             }
                             if(socketStateChange){
-                                mqttClient.publish(mqttTopic.devicesInfoTopic, JSON.stringify({
-                                    devices: utils.makeDevicesArray(clientArray)
+                                mqttClient.publish(mqttTopic.deviceInfoTopic, JSON.stringify({
+                                    id: client.id,
+                                    room: client.room,
+                                    sockets: utils.makeDeviceObject(client)
                                 }));
                             }
                             console.log('requestGid: ' + requestGid);
@@ -195,7 +197,7 @@ mqttClient.on('connect',function(){
                 client.setTimeout(5000);
                 client.on('timeout', function () {
                     console.log('timeout');
-                    clientArray.splice(findClientIndexByID(clientArray, client.id), 1);
+                    clientArray.splice(utils.findClientIndexByID(clientArray, client.id), 1);
                     client.dai.deregister();
                     client.end();
                     /* publish devicesInfoTopic */
