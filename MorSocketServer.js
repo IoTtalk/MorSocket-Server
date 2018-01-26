@@ -5,7 +5,7 @@ var /* For create tcp server */
     shortID = require('shortid'),
     /* Load configure constant */
     config = require('./Config'),
-    /* Load Utilities function */
+    /* Load Utility function */
     utils = require('./Utils.js'),
     /* Load IoTtalk  module */
     dai = require('./DAI').dai,

@@ -19,26 +19,26 @@ var findClientIndexByID = function(clientArray, clientID){
     }
     return index;
 };
-var makeDevicesArray = function(clientArray){
+var makeDevicesArray = function(morSocketArray){
     var devices = [];
-    for(var i = 0; i < clientArray.length; i++){
+    for(var i = 0; i < morSocketArray.length; i++){
         var sockets = [];
         for(var j = 0; j < config.maxSocketGroups; j++){
             for(var k = 0; k < config.socketStateBits; k++){
-                if(clientArray[i].socketStateTable[j][k] != -1){
+                if(morSocketArray[i].socketStateTable[j][k] != -1){
                     var socket = {};
                     socket["index"] = (j*config.socketStateBits+k+1);
-                    socket["state"] = (clientArray[i].socketStateTable[j][k] == 1) ? true : false;
-                    socket["alias"] = clientArray[i].socketAliasTable[j][k];
-                    socket["disable"] = (clientArray[i].socketStateTable[j][k] == -2) ? true :false; 
+                    socket["state"] = (morSocketArray[i].socketStateTable[j][k] == 1);
+                    socket["alias"] = morSocketArray[i].socketAliasTable[j][k];
+                    socket["disable"] = (morSocketArray[i].socketStateTable[j][k] == -2);
                     sockets.push(socket);
                 }
             }
         }
-        if(clientArray[i].id != undefined){
+        if(morSocketArray[i].id != undefined){
             devices.push({
-                id: clientArray[i].id,
-                room: clientArray[i].room,
+                id: morSocketArray[i].id,
+                room: morSocketArray[i].room,
                 sockets:sockets
             });
         }
@@ -46,6 +46,44 @@ var makeDevicesArray = function(clientArray){
     console.log(JSON.stringify(devices));
     return devices;
 };
+var makeDeviceObject = function(morSocket){
+    var socketList = [];
+    for(var i = 0; i < morSocket.socketStateTable.length; i++){
+        var states = morSocket.socketStateTable[i].length;
+        for(var j = 0; j < states; j++){
+            if(morSocket.socketStateTable[i][j] != -1)
+                socketList.push((i*states+(j+1) >= 10) ? (i*states+(j+1)).toString() : "0" + (i*states+(j+1)).toString());
+        }
+    }
+    var socketObjectList = [];
+    for(var i = 0; i < socketList.length; i++){
+        var index = parseInt(socketList[i])-1;
+        var gid = Math.floor(index / config.socketStateBits);
+        var pos = index % config.socketStateBits;
+        var s = {
+            index: parseInt(socketList[i]),
+            state: (morSocket.socketStateTable[gid][pos] == 1),
+            alias: morSocket.socketAliasTable[gid][pos],
+            disable: (morSocket.socketStateTable[gid][pos] == -2)
+        };
+        socketObjectList.push(s);
+    }
+    return socketObjectList;
+};
+var makeOdfList = function(morSocket){
+    var odfList = [];
+    for(var i = 0; i < morSocket.socketStateTable.length; i++){
+        var states = morSocket.socketStateTable[i].length;
+        for(var j = 0; j < states; j++){
+            if(morSocket.socketStateTable[i][j] >= 0)
+                odfList.push('Socket' + (i*states+(j+1)));
+        }
+    }
+    return odfList;
+};
+
 exports.findClientByID = findClientByID;
 exports.findClientIndexByID = findClientIndexByID;
 exports.makeDevicesArray = makeDevicesArray;
+exports.makeOdfList = makeOdfList;
+exports.makeDeviceObject = makeDeviceObject;
