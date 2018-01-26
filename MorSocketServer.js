@@ -5,6 +5,8 @@ var /* For create tcp server */
     shortID = require('shortid'),
     /* Load configure constant */
     config = require('./Config'),
+    /* Load Utilities function */
+    utils = require('./Utils.js'),
     /* Load IoTtalk  module */
     dai = require('./DAI').dai,
     csmapi = require('./CSMAPI').csmapi,
@@ -29,54 +31,6 @@ var /* For create tcp server */
     IoTtalkIP = process.argv[2],
     /* Record setup device room data from setupDeviceRoomTopic */
     setupDeviceRoom = null;
-
-var findClientByID = function(clientID){
-    var client = null;
-    for(var i = 0; i < clientArray.length; i++){
-        if(clientArray[i].id == clientID){
-            client = clientArray[i];
-            break;
-        }
-    }
-    return client;
-};
-var findClientIndexByID = function(clientID){
-    var index = -1;
-    for(var i = 0; i < clientArray.length; i++){
-        if(clientArray[i].id == clientID){
-            index = i;
-            break;
-        }
-    }
-    return index;
-};
-var makeDevicesArray = function(){
-    var devices = [];
-    for(var i = 0; i < clientArray.length; i++){
-        var sockets = [];
-        for(var j = 0; j < config.maxSocketGroups; j++){
-            for(var k = 0; k < config.socketStateBits; k++){
-                if(clientArray[i].socketStateTable[j][k] != -1){
-                    var socket = {};
-                    socket["index"] = (j*config.socketStateBits+k+1);
-                    socket["state"] = (clientArray[i].socketStateTable[j][k] == 1) ? true : false;
-                    socket["alias"] = clientArray[i].socketAliasTable[j][k];
-                    socket["disable"] = (clientArray[i].socketStateTable[j][k] == -2) ? true :false; 
-                    sockets.push(socket);
-                }
-            }
-        }
-        if(clientArray[i].id != undefined){
-            devices.push({
-                id: clientArray[i].id,
-                room: clientArray[i].room,
-                sockets:sockets
-            });
-        }
-    }
-    console.log(JSON.stringify(devices));
-    return devices;
-};
 
 mqttClient.on('connect',function(){
 
@@ -153,11 +107,20 @@ mqttClient.on('connect',function(){
                             /* Client state has changed, trigger register */
                             if (client.socketStateTable[requestGid][0] == -1)
                                 triggerRegister = true;
+                            var socketStateChange = false;
                             for (var i = 0; i < config.socketStateBits; i++){
                                 if(client.socketStateTable[requestGid][i] != -2){
+                                    var socketState = client.socketStateTable[requestGid][i];
                                     client.socketStateTable[requestGid][i] = (cmdState.length > i) ?
                                         parseInt(cmdState[i]) : 0;
+                                    if(socketState != client.socketStateTable[requestGid][i])
+                                        socketStateChange = true;
                                 }
+                            }
+                            if(socketStateChange){
+                                mqttClient.publish(mqttTopic.devicesInfoTopic, JSON.stringify({
+                                    devices: utils.makeDevicesArray(clientArray)
+                                }));
                             }
                             console.log('requestGid: ' + requestGid);
                             break;
@@ -232,12 +195,12 @@ mqttClient.on('connect',function(){
                 client.setTimeout(5000);
                 client.on('timeout', function () {
                     console.log('timeout');
-                    clientArray.splice(findClientIndexByID(client.id), 1);
+                    clientArray.splice(findClientIndexByID(clientArray, client.id), 1);
                     client.dai.deregister();
                     client.end();
                     /* publish devicesInfoTopic */
                     mqttClient.publish(mqttTopic.devicesInfoTopic, JSON.stringify({
-                        devices: makeDevicesArray()
+                        devices: utils.makeDevicesArray(clientArray)
                     }));
                 });
                 /* Catch socket error */
@@ -259,13 +222,13 @@ mqttClient.on('connect',function(){
 mqttClient.on('message', function (topic, message) {
     if(topic == mqttTopic.syncDeviceInfoTopic){
         mqttClient.publish(mqttTopic.devicesInfoTopic, JSON.stringify({
-            devices: makeDevicesArray()
+            devices: utils.makeDevicesArray(clientArray)
         }));
     }
     else if(topic == mqttTopic.switchTopic){
         var data = JSON.parse(message);
         console.log(data);
-        var client = findClientByID(data["id"]);
+        var client = utils.findClientByID(clientArray, data["id"]);
         if(client){
             console.log(data["index"]+ " " + data["state"]);
             client.sendOnOffCommand(data["index"], data["state"]);
@@ -276,7 +239,7 @@ mqttClient.on('message', function (topic, message) {
     }
     else if(topic == mqttTopic.switchDisableTopic){
         var data = JSON.parse(message),
-            client = findClientByID(data["id"]),
+            client = utils.findClientByID(clientArray, data["id"]),
             index = parseInt(data["index"]) - 1,
             gid = Math.floor(index / config.socketStateBits),
             pos = index % config.socketStateBits;
@@ -297,7 +260,7 @@ mqttClient.on('message', function (topic, message) {
     }
     else if(topic == mqttTopic.aliasTopic){
         var data = JSON.parse(message);
-        var client = findClientByID(data["id"]);
+        var client = utils.findClientByID(clientArray, data["id"]);
         if(client){
             console.log(data["index"]+ " " + data["alias"]);
             var index = parseInt(data["index"])-1,
