@@ -39,7 +39,7 @@ var dai = function (morSocket, IoTtalkIP) {
 
         console.log(odfList);
         if(odfList.length == 0) {
-            dan.deregister();
+            //dan.deregister();
             return;
         }
         console.log('mac address:' + macAddress);
@@ -59,7 +59,7 @@ var dai = function (morSocket, IoTtalkIP) {
             morSocket.mqttClient.publish(mqttTopic.deviceInfoTopic, JSON.stringify({
                 id: morSocket.id,
                 room: morSocket.room,
-                sockets: utils.makeDeviceObject(morSocket)
+                sockets: utils.makeSocketObjectList(morSocket)
             }));
 
             //deregister when app is closing

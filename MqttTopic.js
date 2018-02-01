@@ -33,6 +33,17 @@ exports.deviceInfoTopic = "DeviceInfo";
 */
 exports.devicesInfoTopic = "DevicesInfo";
 
+/* Publish when there are any switch change
+*  {
+*      id: MorSocket ID (String),
+*      sockets: [ {
+*          index: socket index in this MorSocket(Integer),
+*          state: on/off (Boolean),
+*      } ]
+*  }
+*/
+exports.switchesInfoTopic = "SwitchesInfo";
+
 /************** subscribe **************/
 
 /*  MorSocketCtl APP will publish SyncDeviceInfo topic when first time open.

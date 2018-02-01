@@ -104,25 +104,23 @@ mqttClient.on('connect',function(){
                                 console.log('response command Gid is not match request command Gid');
                                 return;
                             }
-                            /* Client state has changed, trigger register */
+                            /* Socket is offline, trigger register */
                             if (client.socketStateTable[requestGid][0] == -1)
                                 triggerRegister = true;
-                            var socketStateChange = false;
+                            /* Check Socket state change or not */
                             for (var i = 0; i < config.socketStateBits; i++){
                                 if(client.socketStateTable[requestGid][i] != -2){
                                     var socketState = client.socketStateTable[requestGid][i];
                                     client.socketStateTable[requestGid][i] = (cmdState.length > i) ?
                                         parseInt(cmdState[i]) : 0;
-                                    if(socketState != client.socketStateTable[requestGid][i])
-                                        socketStateChange = true;
+                                    if(socketState != client.socketStateTable[requestGid][i]){
+                                        console.log(utils.makeSocketObject(client, requestGid*config.socketStateBits+1+i));
+                                        mqttClient.publish(mqttTopic.switchesInfoTopic, JSON.stringify({
+                                            id: client.id,
+                                            sockets: utils.makeSocketObject(client, requestGid*config.socketStateBits+1+i)
+                                        }));
+                                    }
                                 }
-                            }
-                            if(socketStateChange){
-                                mqttClient.publish(mqttTopic.deviceInfoTopic, JSON.stringify({
-                                    id: client.id,
-                                    room: client.room,
-                                    sockets: utils.makeDeviceObject(client)
-                                }));
                             }
                             console.log('requestGid: ' + requestGid);
                             break;
@@ -198,7 +196,7 @@ mqttClient.on('connect',function(){
                 client.on('timeout', function () {
                     console.log('timeout');
                     clientArray.splice(utils.findClientIndexByID(clientArray, client.id), 1);
-                    client.dai.deregister();
+                    //client.dai.deregister();
                     client.end();
                     /* publish devicesInfoTopic */
                     mqttClient.publish(mqttTopic.devicesInfoTopic, JSON.stringify({

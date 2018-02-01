@@ -46,7 +46,7 @@ var makeDevicesArray = function(morSocketArray){
     console.log(JSON.stringify(devices));
     return devices;
 };
-var makeDeviceObject = function(morSocket){
+var makeSocketObjectList = function(morSocket){
     var socketList = [];
     for(var i = 0; i < morSocket.socketStateTable.length; i++){
         var states = morSocket.socketStateTable[i].length;
@@ -57,19 +57,31 @@ var makeDeviceObject = function(morSocket){
     }
     var socketObjectList = [];
     for(var i = 0; i < socketList.length; i++){
-        var index = parseInt(socketList[i])-1;
-        var gid = Math.floor(index / config.socketStateBits);
-        var pos = index % config.socketStateBits;
-        var s = {
-            index: parseInt(socketList[i]),
-            state: (morSocket.socketStateTable[gid][pos] == 1),
-            alias: morSocket.socketAliasTable[gid][pos],
-            disable: (morSocket.socketStateTable[gid][pos] == -2)
-        };
+        var index = parseInt(socketList[i])-1,
+            gid = Math.floor(index / config.socketStateBits),
+            pos = index % config.socketStateBits,
+            s = {
+                index: parseInt(socketList[i]),
+                state: (morSocket.socketStateTable[gid][pos] == 1),
+                alias: morSocket.socketAliasTable[gid][pos],
+                disable: (morSocket.socketStateTable[gid][pos] == -2)
+            };
         socketObjectList.push(s);
     }
     return socketObjectList;
 };
+var makeSocketObject = function(morSocket, i){
+    var index = parseInt(i) -1,
+        gid = Math.floor(index / config.socketStateBits),
+        pos = index % config.socketStateBits,
+        socketObject = {
+            index: parseInt(i),
+            state: (morSocket.socketStateTable[gid][pos] == 1),
+            alias: morSocket.socketAliasTable[gid][pos],
+            disable: (morSocket.socketStateTable[gid][pos] == -2)
+        };
+    return [socketObject];
+}
 var makeOdfList = function(morSocket){
     var odfList = [];
     for(var i = 0; i < morSocket.socketStateTable.length; i++){
@@ -86,4 +98,5 @@ exports.findClientByID = findClientByID;
 exports.findClientIndexByID = findClientIndexByID;
 exports.makeDevicesArray = makeDevicesArray;
 exports.makeOdfList = makeOdfList;
-exports.makeDeviceObject = makeDeviceObject;
+exports.makeSocketObject = makeSocketObject;
+exports.makeSocketObjectList = makeSocketObjectList;
