@@ -33,7 +33,7 @@ exports.deviceInfoTopic = "DeviceInfo";
 */
 exports.devicesInfoTopic = "DevicesInfo";
 
-/* Publish when there are any switch change
+/* Publish when sockets change
 *  {
 *      id: MorSocket ID (String),
 *      sockets: [ {
