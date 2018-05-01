@@ -3,7 +3,7 @@ exports.webServerPort = 8899;
 exports.maxSocketGroups = 7;
 exports.socketStateBits = 2;
 exports.IDFList =  [];
-exports.IoTtalkIP = "http://140.113.199.199:9999";
+exports.IoTtalkIP = "http://140.113.199.246:9999";
 exports.MQTTIP = "mqtt://127.0.0.1";
 
 /*  Instruction Format

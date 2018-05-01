@@ -19,7 +19,7 @@ var findClientIndexByID = function(clientArray, clientID){
     }
     return index;
 };
-var makeDevicesArray = function(morSocketArray){
+var makeDeviceObjectList = function(morSocketArray){
     var devices = [];
     for(var i = 0; i < morSocketArray.length; i++){
         var sockets = [];
@@ -96,7 +96,7 @@ var makeOdfList = function(morSocket){
 
 exports.findClientByID = findClientByID;
 exports.findClientIndexByID = findClientIndexByID;
-exports.makeDevicesArray = makeDevicesArray;
+exports.makeDeviceObjectList= makeDeviceObjectList;
 exports.makeOdfList = makeOdfList;
 exports.makeSocketObject = makeSocketObject;
 exports.makeSocketObjectList = makeSocketObjectList;

@@ -68,7 +68,8 @@ mqttClient.on('connect',function(){
                 client.socketStateTable = new Array(config.maxSocketGroups);
                 for (var i = 0; i < config.maxSocketGroups; i++)
                     client.socketStateTable[i] = new Array(config.socketStateBits).fill(-1);
-
+                client.socketStateTable[3][0] = client.socketStateTable[3][1] = 
+                	client.socketStateTable[6][0] = client.socketStateTable[6][1] = 0;
 
                 /* Construct sendOnOffCommand function for this client */
                 client.sendOnOffCommand = function (socketIndex, state) {
@@ -85,7 +86,7 @@ mqttClient.on('connect',function(){
                 var triggerRegister = false;
 
                 /* Start polling socket state */
-                cmdHandler.sendReadStateCommand(currentGid, client);
+                //cmdHandler.sendReadStateCommand(currentGid, client);
 
                 /* Command received */
                 client.on('data', function (cmd) {
@@ -100,40 +101,41 @@ mqttClient.on('connect',function(){
                             /* Update socketStateTable of client */
                             var responseGid = parseInt(cmd.substring(2, 4), 16),
                                 cmdState = parseInt(cmd.substring(4, 6), 16).toString(2).split('').reverse();
-                            if(responseGid != requestGid){
-                                console.log('response command Gid is not match request command Gid');
-                                return;
-                            }
+                            //if(responseGid != requestGid){
+                            //    console.log('response command Gid is not match request command Gid');
+                            //    return;
+                            //}
                             /* Socket is offline, trigger register */
-                            if (client.socketStateTable[requestGid][0] == -1)
-                                triggerRegister = true;
+                            //if (client.socketStateTable[requestGid][0] == -1)
+                                //triggerRegister = true;
                             /* Check Socket state change or not */
                             for (var i = 0; i < config.socketStateBits; i++){
                                 if(client.socketStateTable[requestGid][i] != -2){
-                                    var socketState = client.socketStateTable[requestGid][i];
-                                    client.socketStateTable[requestGid][i] = (cmdState.length > i) ?
-                                        parseInt(cmdState[i]) : 0;
-                                    if(socketState != client.socketStateTable[requestGid][i]){
-                                        console.log(utils.makeSocketObject(client, requestGid*config.socketStateBits+1+i));
-                                        mqttClient.publish(mqttTopic.switchesInfoTopic, JSON.stringify({
-                                            id: client.id,
-                                            sockets: utils.makeSocketObject(client, requestGid*config.socketStateBits+1+i)
-                                        }));
-                                    }
-                                }
-                            }
-                            console.log('requestGid: ' + requestGid);
+                                     var socketState = client.socketStateTable[requestGid][i];
+                                     //cmdState[i] = (parseInt(cmdState[i]) == -1) ? 0 : parseInt(cmdState[i]);
+                                     client.socketStateTable[requestGid][i] = (cmdState.length > i) ?
+                                         parseInt(cmdState[i]) : 0;
+                                     if(socketState != client.socketStateTable[requestGid][i]){
+                                         console.log(utils.makeSocketObject(client, requestGid*config.socketStateBits+1+i));
+                                         mqttClient.publish(mqttTopic.switchesInfoTopic, JSON.stringify({
+                                             id: client.id,
+                                             sockets: utils.makeSocketObject(client, requestGid*config.socketStateBits+1+i)
+                                         }));
+                                     }
+                                 }
+                             }
+                            //console.log('requestGid: ' + requestGid);
                             break;
 
                         case config.OPCode[3]: //E1
-                            requestGid = cmdHandler.requestGid;
-                            /* Client state has changed, trigger register */
-                            if (client.socketStateTable[requestGid][0] != -1)
-                                triggerRegister = true;
+                            // requestGid = cmdHandler.requestGid;
+                            // /* Client state has changed, trigger register */
+                            // if (client.socketStateTable[requestGid][0] != -1)
+                            //     triggerRegister = true;
 
-                            /* Update socketStateTable of client */
-                            for (var i = 0; i < config.socketStateBits; i++)
-                                client.socketStateTable[requestGid][i] = -1;
+                            // /* Update socketStateTable of client */
+                            // for (var i = 0; i < config.socketStateBits; i++)
+                            //     client.socketStateTable[requestGid][i] = -1;
                             break;
 
                         case config.OPCode[1]: //C3:
@@ -163,6 +165,7 @@ mqttClient.on('connect',function(){
                             catch (error) {
                                 client.room = "Others";
                             }
+                            client.dai.register();
                             break;
 
                         default:
@@ -171,28 +174,29 @@ mqttClient.on('connect',function(){
                             break;
 
                     }
-                    if (currentGid == requestGid) {
-                        if (currentGid == config.maxSocketGroups - 1) {
-                            if (triggerRegister)
-                                client.dai.register();
+                    //if (currentGid == requestGid) {
+                    //    if (currentGid == config.maxSocketGroups - 1) {
+                    //        if (triggerRegister)
+                    //            client.dai.register();
                             /* Start over again */
-                            currentGid = -1;
-                            triggerRegister = false;
-                            console.log(client.socketStateTable);
-                        }
-                        cmdHandler.sendReadStateCommand(++currentGid, client);
-                    }
-                    else {
-                        if (triggerRegister)
-                            client.dai.register();
+                    //        currentGid = -1;
+                    //        triggerRegister = false;
+                    //        console.log(client.socketStateTable);
+                    //    }
+                    //    cmdHandler.sendReadStateCommand(++currentGid, client);
+                    //}
+                    //else {
+                    //    if (triggerRegister)
+                    //        client.dai.register();
                         /* Continued */
-                        triggerRegister = false;
-                        console.log(client.socketStateTable);
-                    }
-                    setTimeout(cmdHandler.sendCmdSem.leave,1000);
+                    //    triggerRegister = false;
+                    //    console.log(client.socketStateTable);
+                    //}
+                    //setTimeout(cmdHandler.sendCmdSem.leave,1000);
+                    cmdHandler.sendCmdSem.leave();
                 });
                 /* Timeout event for detect MorSocket power off */
-                client.setTimeout(5000);
+                // client.setTimeout(5000);
                 client.on('timeout', function () {
                     console.log('timeout');
                     clientArray.splice(utils.findClientIndexByID(clientArray, client.id), 1);
@@ -200,7 +204,7 @@ mqttClient.on('connect',function(){
                     client.end();
                     /* publish devicesInfoTopic */
                     mqttClient.publish(mqttTopic.devicesInfoTopic, JSON.stringify({
-                        devices: utils.makeDevicesArray(clientArray)
+                        devices: utils.makeDeviceObjectList(clientArray)
                     }));
                 });
                 /* Catch socket error */
@@ -222,7 +226,7 @@ mqttClient.on('connect',function(){
 mqttClient.on('message', function (topic, message) {
     if(topic == mqttTopic.syncDeviceInfoTopic){
         mqttClient.publish(mqttTopic.devicesInfoTopic, JSON.stringify({
-            devices: utils.makeDevicesArray(clientArray)
+            devices: utils.makeDeviceObjectList(clientArray)
         }));
     }
     else if(topic == mqttTopic.switchTopic){

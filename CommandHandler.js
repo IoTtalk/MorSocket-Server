@@ -9,6 +9,7 @@ var CommandHandler = function(sendCmdSem){
     this.sendCmdSem = sendCmdSem;
     /* use to record current request command gid */
     this.requestGid = -1;
+    this.date = null;
 };
 
 CommandHandler.prototype.integerToHexString = function (d) {
@@ -41,6 +42,7 @@ CommandHandler.prototype.sendOnOffCommand = function(socketIndex, state, client)
         parent = this;
 
     parent.sendCmdSem.take(function () {
+        parent.date = Date.now();
         /* offline, command not send*/
         if(client.socketStateTable[gid][pos] == -1){
             console.log('offline command not send!');
@@ -75,6 +77,7 @@ CommandHandler.prototype.sendReadStateCommand = function(gid, client){
         cmdByteArr,
         parent = this;
     parent.sendCmdSem.take(function () {
+        parent.date = Date.now();
         command = op + parent.integerToHexString(gid) + parent.integerToHexString(rw)
             + parent.integerToHexString(state) + parent.integerToHexString(channel);
         cmdByteArr = parent.hexToBytes(command);
@@ -94,6 +97,7 @@ CommandHandler.prototype.sendReadBleMacCommand = function(client){
         cmdByteArr,
         parent = this;
     parent.sendCmdSem.take(function () {
+        parent.date = Date.now();
         command = op +  parent.integerToHexString(channel);
         cmdByteArr = parent.hexToBytes(command);
         buffer = new Buffer(cmdByteArr);

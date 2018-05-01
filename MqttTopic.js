@@ -87,3 +87,7 @@ exports.aliasTopic = "Alias";
 *  }
 * */
 exports.setupDeviceRoomTopic = "SetupDeviceRoom";
+
+exports.timeMeasureTopic = "TimeMeasure";
+
+
