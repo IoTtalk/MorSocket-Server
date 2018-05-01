@@ -192,8 +192,7 @@ mqttClient.on('connect',function(){
                     //    triggerRegister = false;
                     //    console.log(client.socketStateTable);
                     //}
-                    //setTimeout(cmdHandler.sendCmdSem.leave,1000);
-                    cmdHandler.sendCmdSem.leave();
+                    setTimeout(cmdHandler.sendCmdSem.leave,1000);
                 });
                 /* Timeout event for detect MorSocket power off */
                 // client.setTimeout(5000);
