@@ -31,9 +31,8 @@ var dai = function (morSocket, IoTtalkIP) {
                 morSocket.sendOnOffCommand(socketIndex, data);
             }
             else if(odfName == "Control"){
-                if(data[0] == "SET_DF_STATUS"){
-                    setAliases();
-                }
+                if(data[0] == "SET_DF_STATUS")
+                    setTimeout(setAliases, 1500);
             }
         };
 
@@ -54,7 +53,6 @@ var dai = function (morSocket, IoTtalkIP) {
 
         }, function (result) {
             console.log('register:', result);
-            setTimeout(setAliases, 1500);
 
             morSocket.mqttClient.publish(mqttTopic.deviceInfoTopic, JSON.stringify({
                 id: morSocket.id,

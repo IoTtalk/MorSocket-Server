@@ -127,7 +127,7 @@ var csmapi = (function () {
     }
     function set_alias(mac_addr, df_name, alias, callback){
         var options = {
-            url:'http://' + ENDPOINT + ':9999/set_alias/' + mac_addr + '/' + df_name + '/alias?name=' + alias,
+            url:encodeURI('http://' + ENDPOINT + ':9999/set_alias/' + mac_addr + '/' + df_name + '/alias?name=' + alias),
             method:'GET',
             headers:{
                 'Content-Type': 'application/json; charset=utf-8',
